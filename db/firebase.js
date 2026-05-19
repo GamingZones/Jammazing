@@ -106,8 +106,18 @@ class FirebaseDatabase {
     async createUser(userData) {
         try {
             console.log('📝 Starting createUser for:', userData.email);
+            console.log('🔍 Database connection check:');
+            console.log('  this.db:', this.db ? '✅ exists' : '❌ NULL');
+            console.log('  this.initialized:', this.initialized ? '✅ true' : '❌ false');
+            
+            if (!this.db) {
+                throw new Error('Database connection is not initialized');
+            }
+            
             const userId = this.generateId();
+            console.log('📛 Generated userId:', userId);
             const timestamp = new Date().toISOString();
+            console.log('⏰ Timestamp:', timestamp);
             
             const user = {
                 id: userId,
@@ -115,19 +125,21 @@ class FirebaseDatabase {
                 createdAt: timestamp,
                 updatedAt: timestamp
             };
+            
+            console.log('📄 User object created:', Object.keys(user));
 
             // Store in database with timeout
-            console.log('📤 Writing user to Firebase...');
+            console.log('📤 Writing user to Firebase at path: users/' + userId);
             await withTimeout(this.db.ref(`users/${userId}`).set(user), 5000);
-            console.log('✅ User data written');
+            console.log('✅ User data written to Firebase');
             
             // Create email index for lookups
-            console.log('📤 Writing email index...');
+            console.log('📤 Writing email index at path: users_by_email/' + this.encodeEmail(userData.email));
             await withTimeout(this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId), 5000);
             console.log('✅ Email index written');
             
             // Create username index
-            console.log('📤 Writing username index...');
+            console.log('📤 Writing username index at path: users_by_username/' + userData.username);
             await withTimeout(this.db.ref(`users_by_username/${userData.username}`).set(userId), 5000);
             console.log('✅ Username index written');
 
@@ -135,6 +147,7 @@ class FirebaseDatabase {
             return user;
         } catch (error) {
             console.error('❌ Error creating user:', error.message);
+            console.error('Error type:', error.constructor.name);
             console.error('Stack:', error.stack);
             throw error;
         }
@@ -142,13 +155,26 @@ class FirebaseDatabase {
 
     async getUserByEmail(email) {
         try {
-            const userId = (await this.db.ref(`users_by_email/${this.encodeEmail(email)}`).once('value')).val();
-            if (!userId) return null;
+            console.log('🔍 getUserByEmail called for:', email);
+            console.log('📍 Looking up by encoded email:', this.encodeEmail(email));
             
-            const user = (await this.db.ref(`users/${userId}`).once('value')).val();
+            const encodedEmail = this.encodeEmail(email);
+            console.log('⏳ Querying users_by_email/' + encodedEmail);
+            const userId = (await withTimeout(this.db.ref(`users_by_email/${encodedEmail}`).once('value'), 5000)).val();
+            
+            console.log('📝 userId lookup result:', userId ? `found: ${userId}` : 'null');
+            if (!userId) {
+                console.log('✅ No user found for email');
+                return null;
+            }
+            
+            console.log('⏳ Fetching user document from users/' + userId);
+            const user = (await withTimeout(this.db.ref(`users/${userId}`).once('value'), 5000)).val();
+            console.log('✅ User document fetched');
             return user;
         } catch (error) {
-            console.error('Error getting user by email:', error);
+            console.error('❌ Error getting user by email:', error.message);
+            console.error('Error type:', error.constructor.name);
             return null;
         }
     }

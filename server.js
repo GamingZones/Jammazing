@@ -177,11 +177,14 @@ app.post('/api/auth/register', async (req, res) => {
         
         // Check if user exists
         console.log('🔍 Checking if user already exists...');
+        console.log('🔍 Calling userModel.getByEmail with:', email);
         const existingUser = await userModel.getByEmail(email);
+        console.log('🔍 getByEmail returned:', existingUser ? 'USER FOUND' : 'no user found');
         if (existingUser) {
             console.warn('⚠️ User already exists:', email);
             return res.status(409).json({ error: 'Email already registered' });
         }
+        console.log('✅ User does not exist, proceeding...');
         
         // Hash password
         console.log('🔐 Hashing password...');
