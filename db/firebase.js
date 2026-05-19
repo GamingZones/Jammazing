@@ -34,11 +34,17 @@ async function initializeFirebase() {
         const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
         const databaseUrl = process.env.FIREBASE_DATABASE_URL;
         
-        console.log('🔍 Environment variables check:');
-        console.log('  FIREBASE_PROJECT_ID:', projectId ? '✅' : '❌ MISSING');
-        console.log('  FIREBASE_CLIENT_EMAIL:', clientEmail ? '✅' : '❌ MISSING');
-        console.log('  FIREBASE_PRIVATE_KEY:', privateKey ? `✅ (${privateKey.length} chars)` : '❌ MISSING');
-        console.log('  FIREBASE_DATABASE_URL:', databaseUrl ? '✅' : '❌ MISSING');
+        // Validate ALL required credentials exist
+        if (!projectId || !privateKey || !clientEmail || !databaseUrl) {
+            console.error('❌❌❌ CRITICAL: Firebase environment variables NOT SET');
+            console.error('Missing:');
+            if (!projectId) console.error('  - FIREBASE_PROJECT_ID');
+            if (!clientEmail) console.error('  - FIREBASE_CLIENT_EMAIL');
+            if (!privateKey) console.error('  - FIREBASE_PRIVATE_KEY');
+            if (!databaseUrl) console.error('  - FIREBASE_DATABASE_URL');
+            console.error('Please set these in Vercel Settings → Environment Variables');
+            return false;
+        }
         
         const serviceAccount = {
             type: 'service_account',
@@ -118,68 +124,26 @@ class FirebaseDatabase {
 
     // USERS Operations
     async createUser(userData) {
-        try {
-            console.log('📝 Starting createUser for:', userData.email);
-            console.log('🔍 Database connection check:');
-            console.log('  this.db:', this.db ? '✅ exists' : '❌ NULL');
-            console.log('  this.initialized:', this.initialized ? '✅ true' : '❌ false');
-            
-            if (!this.db) {
-                throw new Error('Database connection is not initialized');
-            }
-            
-            const userId = this.generateId();
-            console.log('📛 Generated userId:', userId);
-            const timestamp = new Date().toISOString();
-            console.log('⏰ Timestamp:', timestamp);
-            
-            const user = {
-                id: userId,
-                ...userData,
-                createdAt: timestamp,
-                updatedAt: timestamp
-            };
-            
-            console.log('📄 User object created:', Object.keys(user));
+        const userId = this.generateId();
+        const timestamp = new Date().toISOString();
+        
+        const user = {
+            id: userId,
+            ...userData,
+            createdAt: timestamp,
+            updatedAt: timestamp
+        };
 
-            // Store in database with timeout
-            console.log('📤 Writing user to Firebase at path: users/' + userId);
-            try {
-                await this.db.ref(`users/${userId}`).set(user);
-                console.log('✅ User data written to Firebase');
-            } catch (writeErr) {
-                console.error('❌ Failed to write user:', writeErr.message);
-                throw writeErr;
-            }
-            
-            // Create email index for lookups
-            console.log('📤 Writing email index at path: users_by_email/' + this.encodeEmail(userData.email));
-            try {
-                await this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId);
-                console.log('✅ Email index written');
-            } catch (writeErr) {
-                console.error('❌ Failed to write email index:', writeErr.message);
-                throw writeErr;
-            }
-            
-            // Create username index
-            console.log('📤 Writing username index at path: users_by_username/' + userData.username);
-            try {
-                await this.db.ref(`users_by_username/${userData.username}`).set(userId);
-                console.log('✅ Username index written');
-            } catch (writeErr) {
-                console.error('❌ Failed to write username index:', writeErr.message);
-                throw writeErr;
-            }
+        // Write user to Firebase
+        await this.db.ref(`users/${userId}`).set(user);
+        
+        // Create email index for lookups
+        await this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId);
+        
+        // Create username index
+        await this.db.ref(`users_by_username/${userData.username}`).set(userId);
 
-            console.log(`✅ User created successfully: ${userId}`);
-            return user;
-        } catch (error) {
-            console.error('❌ Error creating user:', error.message);
-            console.error('Error type:', error.constructor.name);
-            console.error('Stack:', error.stack);
-            throw error;
-        }
+        return user;
     }
 
     async getUserByEmail(email) {

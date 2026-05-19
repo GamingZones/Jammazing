@@ -158,128 +158,48 @@ app.get('/favicon.ico', (req, res) => {
     res.status(204).send();
 });
 
-// Diagnostic endpoint to test Firebase connection
-app.get('/api/test-firebase', async (req, res) => {
-    try {
-        console.log('🧪 Testing Firebase connection...');
-        console.log('   userModel exists?', userModel ? '✅ yes' : '❌ no');
-        console.log('   db exists?', db ? '✅ yes' : '❌ no');
-        console.log('   dbInitialized?', dbInitialized ? '✅ yes' : '❌ no');
-        
-        if (!db) {
-            return res.status(503).json({ error: 'Database not initialized yet', ready: false });
-        }
-        
-        // Try a simple write
-        const testId = 'test_' + Date.now();
-        const testData = { test: true, timestamp: new Date().toISOString() };
-        
-        console.log('   Attempting test write to test_connections/' + testId);
-        await db.ref(`test_connections/${testId}`).set(testData);
-        console.log('   ✅ Test write succeeded');
-        
-        // Try to read it back
-        const snapshot = await db.ref(`test_connections/${testId}`).once('value');
-        const readData = snapshot.val();
-        console.log('   ✅ Test read succeeded, data:', readData);
-        
-        res.json({
-            success: true,
-            message: 'Firebase connection working',
-            testId,
-            wrote: testData,
-            read: readData
-        });
-    } catch (error) {
-        console.error('❌ Firebase test failed:', error.message);
-        res.status(500).json({ 
-            error: error.message,
-            success: false 
-        });
-    }
-});
-
 // ==================== USER ROUTES ====================
 
 // Register a new user
 app.post('/api/auth/register', async (req, res) => {
     try {
-        console.log('📨 Register request received');
-        
         if (!userModel) {
-            console.error('❌ userModel is not initialized');
-            return res.status(503).json({ error: 'Database not initialized. Please try again in a moment.' });
+            return res.status(503).json({ error: 'Database not initialized' });
         }
         
         const { firstName, lastName, email, username, password, accountType, instrument } = req.body;
-        console.log(`📝 Registration data: ${email}, ${username}`);
         
-        // Validate input
         if (!firstName || !lastName || !email || !username || !password || !accountType) {
-            console.error('❌ Missing required fields');
             return res.status(400).json({ error: 'Missing required fields' });
         }
         
-        // Check if user exists
-        console.log('🔍 Checking if user already exists...');
-        console.log('🔍 Calling userModel.getByEmail with:', email);
-        console.log('⏳ About to await getByEmail...');
-        
-        let existingUser;
-        try {
-            existingUser = await userModel.getByEmail(email);
-            console.log('✅ getByEmail completed, result:', existingUser ? 'USER FOUND' : 'no user found');
-        } catch (err) {
-            console.error('❌ getByEmail threw error:', err.message);
-            throw err;
-        }
-        
+        // Check if user already exists
+        const existingUser = await userModel.getByEmail(email);
         if (existingUser) {
-            console.warn('⚠️ User already exists:', email);
             return res.status(409).json({ error: 'Email already registered' });
         }
-        console.log('✅ User does not exist, proceeding...');
         
         // Hash password
-        console.log('🔐 Hashing password...');
-        let hashedPassword;
-        try {
-            hashedPassword = await bcrypt.hash(password, 12);
-            console.log('✅ Password hashed successfully');
-        } catch (hashErr) {
-            console.error('❌ Password hashing failed:', hashErr.message);
-            throw hashErr;
-        }
+        const hashedPassword = await bcrypt.hash(password, 12);
         
-        // Create user
-        console.log('💾 Creating user in database...');
-        let result;
-        try {
-            result = await userModel.create({
-                firstName,
-                lastName,
-                email,
-                username,
-                password: hashedPassword,
-                accountType,
-                instrument: instrument || ''
-            });
-            console.log('✅ userModel.create returned:', result ? 'SUCCESS' : 'null');
-        } catch (createErr) {
-            console.error('❌ userModel.create failed:', createErr.message);
-            console.error('   Stack:', createErr.stack);
-            throw createErr;
-        }
+        // Create and save user to Firebase
+        const result = await userModel.create({
+            firstName,
+            lastName,
+            email,
+            username,
+            password: hashedPassword,
+            accountType,
+            instrument: instrument || ''
+        });
         
-        console.log('✅ User registered successfully:', result.id);
         res.status(201).json({
             message: 'User registered successfully',
             userId: result.id
         });
         
     } catch (error) {
-        console.error('❌ Register error:', error.message);
-        console.error('Stack trace:', error.stack);
+        console.error('Register error:', error.message);
         res.status(500).json({ error: error.message || 'Registration failed' });
     }
 });

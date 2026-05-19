@@ -6,29 +6,17 @@ class User {
 
     // Create a new user
     async create(userData) {
-        console.log('👤 User.create called with:', { firstName: userData.firstName, email: userData.email, username: userData.username });
         const { firstName, lastName, email, username, password, accountType, instrument } = userData;
         
-        console.log('👤 About to call this.db.createUser...');
-        console.log('👤 this.db is:', this.db ? '✅ exists' : '❌ NULL');
-        console.log('👤 this.db.createUser is:', this.db && this.db.createUser ? '✅ exists' : '❌ NULL');
-        
-        try {
-            const result = await this.db.createUser({
-                firstName,
-                lastName,
-                email,
-                username,
-                password,
-                accountType,
-                instrument: instrument || ''
-            });
-            console.log('👤 this.db.createUser returned:', result ? '✅ SUCCESS' : '❌ null');
-            return result;
-        } catch (err) {
-            console.error('👤 this.db.createUser threw error:', err.message);
-            throw err;
-        }
+        return await this.db.createUser({
+            firstName,
+            lastName,
+            email,
+            username,
+            password,
+            accountType,
+            instrument: instrument || ''
+        });
     }
 
     // Get user by ID
