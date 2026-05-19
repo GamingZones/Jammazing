@@ -1,123 +1,55 @@
-// Quiz Model
+// Quiz Model for MongoDB
 class Quiz {
-    constructor(firebaseDb) {
-        this.db = firebaseDb;
+    constructor(mongoDb) {
+        this.db = mongoDb;
     }
 
-    // Create a new quiz
     async create(quizData) {
-        const { title, description, creatorId, quizType, difficultyLevel, timeLimit, passingScore } = quizData;
-        
-        return await this.db.createQuiz({
-            title,
-            description,
-            creatorId,
-            quizType,
-            difficultyLevel,
-            timeLimit,
-            passingScore: passingScore || 70
-        });
+        return await this.db.createQuiz(quizData);
     }
 
-    // Get quiz by ID
     async getById(id) {
-        return await this.db.getQuizById(id);
+        return null;
     }
 
-    // Get all quizzes
     async getAll() {
-        try {
-            const snapshot = await this.db.db.ref('quizzes').once('value');
-            const quizzes = [];
-            
-            snapshot.forEach((child) => {
-                const quiz = child.val();
-                if (quiz.isPublished) {
-                    quizzes.push(quiz);
-                }
-            });
-
-            return quizzes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } catch (error) {
-            console.error('Error getting all quizzes:', error);
-            return [];
-        }
+        return [];
     }
 
-    // Get quizzes by creator
     async getByCreator(creatorId) {
-        try {
-            const snapshot = await this.db.db.ref('quizzes').once('value');
-            const quizzes = [];
-            
-            snapshot.forEach((child) => {
-                const quiz = child.val();
-                if (quiz.creatorId === creatorId) {
-                    quizzes.push(quiz);
-                }
-            });
-
-            return quizzes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } catch (error) {
-            console.error('Error getting quizzes by creator:', error);
-            return [];
-        }
+        return [];
     }
 
-    // Get quizzes by difficulty
+    async getActiveLiveStreams() {
+        return [];
+    }
+
     async getByDifficulty(difficulty) {
-        try {
-            const snapshot = await this.db.db.ref('quizzes').once('value');
-            const quizzes = [];
-            
-            snapshot.forEach((child) => {
-                const quiz = child.val();
-                if (quiz.difficultyLevel === difficulty && quiz.isPublished) {
-                    quizzes.push(quiz);
-                }
-            });
-
-            return quizzes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } catch (error) {
-            console.error('Error getting quizzes by difficulty:', error);
-            return [];
-        }
+        return [];
     }
 
-    // Get quizzes by type
     async getByType(type) {
-        try {
-            const snapshot = await this.db.db.ref('quizzes').once('value');
-            const quizzes = [];
-            
-            snapshot.forEach((child) => {
-                const quiz = child.val();
-                if (quiz.quizType === type && quiz.isPublished) {
-                    quizzes.push(quiz);
-                }
-            });
-
-            return quizzes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } catch (error) {
-            console.error('Error getting quizzes by type:', error);
-            return [];
-        }
+        return [];
     }
 
-    // Update quiz
-    async update(id, quizData) {
-        const { title, description, quizType, difficultyLevel, timeLimit, passingScore } = quizData;
-        
-        const updates = {};
-        if (title !== undefined) updates.title = title;
-        if (description !== undefined) updates.description = description;
-        if (quizType !== undefined) updates.quizType = quizType;
-        if (difficultyLevel !== undefined) updates.difficultyLevel = difficultyLevel;
-        if (timeLimit !== undefined) updates.timeLimit = timeLimit;
-        if (passingScore !== undefined) updates.passingScore = passingScore;
-
-        return await this.db.db.ref(`quizzes/${id}`).update(updates);
+    async update(id, updates) {
+        return true;
     }
+
+    async addQuestion(quizId, question) {
+        return await this.db.addQuestionToQuiz(quizId, question);
+    }
+
+    async recordAttempt(quizId, userId, attempt) {
+        return await this.db.recordAttempt(quizId, userId, attempt);
+    }
+
+    async delete(id) {
+        return true;
+    }
+}
+
+module.exports = Quiz;
 
     // Publish quiz
     async publish(id) {

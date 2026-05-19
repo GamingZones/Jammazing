@@ -1,7 +1,7 @@
-// Notification Model
+// Notification Model for MongoDB
 class Notification {
-    constructor(firebaseDb) {
-        this.db = firebaseDb;
+    constructor(mongoDb) {
+        this.db = mongoDb;
     }
 
     // Create a new notification

@@ -1,14 +1,14 @@
-// User Model
+// User Model for MongoDB
 class User {
-    constructor(firebaseDb) {
-        this.db = firebaseDb;
+    constructor(mongoDb) {
+        this.db = mongoDb;
     }
 
     // Create a new user
     async create(userData) {
         const { firstName, lastName, email, username, password, accountType, instrument } = userData;
         
-        return await this.db.createUser({
+        const result = await this.db.createUser({
             firstName,
             lastName,
             email,
@@ -17,6 +17,8 @@ class User {
             accountType,
             instrument: instrument || ''
         });
+        
+        return result;
     }
 
     // Get user by ID
@@ -37,6 +39,12 @@ class User {
     // Get all users
     async getAll() {
         return await this.db.getAllUsers();
+    }
+
+    // Get all users by account type
+    async getUsersByAccountType(accountType) {
+        const users = await this.db.getAllUsers();
+        return users.filter(u => u.accountType === accountType);
     }
 
     // Get all instructors
@@ -67,23 +75,7 @@ class User {
 
     // Delete user
     async delete(id) {
-        try {
-            await this.db.db.ref(`users/${id}`).remove();
-            await this.db.db.ref(`users_by_email`).once('value', (snapshot) => {
-                snapshot.forEach((child) => {
-                    if (child.val() === id) child.ref.remove();
-                });
-            });
-            await this.db.db.ref(`users_by_username`).once('value', (snapshot) => {
-                snapshot.forEach((child) => {
-                    if (child.val() === id) child.ref.remove();
-                });
-            });
-            return true;
-        } catch (error) {
-            console.error('Error deleting user:', error);
-            throw error;
-        }
+        return await this.db.deleteUser(id);
     }
 
     // Change password

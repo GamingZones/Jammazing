@@ -1,7 +1,7 @@
-// Message Model
+// Message Model for MongoDB
 class Message {
-    constructor(firebaseDb) {
-        this.db = firebaseDb;
+    constructor(mongoDb) {
+        this.db = mongoDb;
     }
 
     // Create a new message

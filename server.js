@@ -8,8 +8,8 @@ const http = require('http');
 const socketIO = require('socket.io');
 require('dotenv').config();
 
-// Import Firebase Database and Models
-const { FirebaseDatabase } = require('./db/firebase');
+// Import MongoDB Database and Models
+const MongoDatabase = require('./db/mongodb');
 const User = require('./models/User');
 const Quiz = require('./models/Quiz');
 const LiveStream = require('./models/LiveStream');
@@ -79,12 +79,12 @@ async function initializeApp() {
     
     dbInitPromise = (async () => {
         try {
-            // Initialize Firebase Database
-            db = new FirebaseDatabase();
+            // Initialize MongoDB Database
+            db = new MongoDatabase();
             const initialized = await db.initialize();
             
             if (!initialized) {
-                console.error('❌ Firebase initialization failed - running in degraded mode');
+                console.error('❌ MongoDB initialization failed - running in degraded mode');
                 return;
             }
             
@@ -97,7 +97,7 @@ async function initializeApp() {
             notificationModel = new Notification(db);
             
             dbInitialized = true;
-            console.log('✅ Firebase Database and models initialized successfully');
+            console.log('✅ MongoDB Database and models initialized successfully');
             
             // Load active streams from database on startup
             try {
@@ -111,7 +111,7 @@ async function initializeApp() {
                         streamerPicture: user ? user.profilePicture : null
                     });
                 }
-                console.log(`✅ Loaded ${dbStreams.length} active streams from Firebase`);
+                console.log(`✅ Loaded ${dbStreams.length} active streams from MongoDB`);
             } catch (e) {
                 console.warn('⚠️ Could not load active streams:', e.message);
             }

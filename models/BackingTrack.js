@@ -1,7 +1,7 @@
-// BackingTrack Model
+// BackingTrack Model for MongoDB
 class BackingTrack {
-    constructor(firebaseDb) {
-        this.db = firebaseDb;
+    constructor(mongoDb) {
+        this.db = mongoDb;
     }
 
     // Create a new backing track
