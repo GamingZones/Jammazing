@@ -83,6 +83,11 @@ async function initializeApp() {
     
     dbInitPromise = (async () => {
         try {
+            // Initialize Google Drive Service
+            console.log('🔧 Initializing Google Drive service...');
+            gdriveService.loadFileIdMap();
+            console.log('✅ Google Drive service initialized');
+            
             // Initialize In-Memory Database
             db = new MemoryDatabase();
             const initialized = await db.initialize();
@@ -111,7 +116,7 @@ async function initializeApp() {
             }
             
         } catch (error) {
-            console.error('⚠️ Database initialization error:', error.message);
+            console.error('⚠️ Initialization error:', error.message);
             // Create dummy models so app doesn't crash
             try {
                 userModel = new User(null);
@@ -1807,7 +1812,7 @@ app.get('/api/posts/:id/reactions', async (req, res) => {
 // ==================== GOOGLE DRIVE INTEGRATION ====================
 const gdriveService = require('./db/gdrive');
 
-// Middleware: ensure app is initialized before processing drive requests
+// Middleware: ensure drive service is initialized and has data
 app.use('/api/drive', async (req, res, next) => {
     // Check if gdriveService is properly loaded
     if (!gdriveService || typeof gdriveService.downloadFile !== 'function') {
@@ -1817,6 +1822,17 @@ app.use('/api/drive', async (req, res, next) => {
             details: 'gdriveService.downloadFile is not a function'
         });
     }
+    
+    // Check if we have configured files
+    const allFiles = gdriveService.getAllConfiguredFiles();
+    if (!allFiles || Object.keys(allFiles).length === 0) {
+        console.error('[Drive Middleware] No files configured in drive service');
+        return res.status(503).json({ 
+            error: 'Drive service not ready',
+            details: 'No files configured - drive-files.json may not have been loaded'
+        });
+    }
+    
     next();
 });
 

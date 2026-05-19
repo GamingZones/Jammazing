@@ -15,17 +15,30 @@ let fileIdMap = {};
 
 function loadFileIdMap() {
     try {
-        if (fs.existsSync(CONFIG_PATH)) {
-            const content = fs.readFileSync(CONFIG_PATH, 'utf8');
-            fileIdMap = JSON.parse(content);
-            console.log('✅ Loaded Google Drive file ID mappings');
-        } else {
-            console.warn('⚠️ Config file not found at:', CONFIG_PATH);
+        const configPath = CONFIG_PATH;
+        console.log(`[gdrive] Loading config from: ${configPath}`);
+        
+        if (!fs.existsSync(configPath)) {
+            console.error(`[gdrive] Config file NOT found at: ${configPath}`);
             fileIdMap = {};
+            return false;
         }
+        
+        const content = fs.readFileSync(configPath, 'utf8');
+        fileIdMap = JSON.parse(content);
+        
+        // Count files per category
+        const stats = {};
+        for (const [category, files] of Object.entries(fileIdMap)) {
+            stats[category] = Object.keys(files).length;
+        }
+        
+        console.log(`✅ [gdrive] Loaded file ID mappings: ${JSON.stringify(stats)}`);
+        return true;
     } catch (error) {
-        console.error('Error loading file ID config:', error);
+        console.error(`[gdrive] Error loading config: ${error.message}`);
         fileIdMap = {};
+        return false;
     }
 }
 
