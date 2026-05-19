@@ -69,103 +69,123 @@ app.use(express.static(path.join(__dirname)));
 // Database Instance
 let db;
 let userModel, quizModel, liveStreamModel, messageModel, backingTrackModel, notificationModel;
+let dbInitialized = false;
+let dbInitPromise = null;
 
 // In-memory tracking of active streams (for real-time updates)
 const activeStreams = new Map(); // key: streamerId, value: stream data
 
 // Initialize Database on server start
 async function initializeApp() {
-    try {
-        db = new Database();
-        await db.initializeDatabase();
-        
-        // Initialize Models
-        userModel = new User(db);
-        quizModel = new Quiz(db);
-        liveStreamModel = new LiveStream(db);
-        messageModel = new Message(db);
-        backingTrackModel = new BackingTrack(db);
-        notificationModel = new Notification(db);
-        
-        console.log('✅ Database and models initialized');
-        
-        // Load active streams from database on startup
+    if (dbInitialized) return Promise.resolve();
+    if (dbInitPromise) return dbInitPromise;
+    
+    dbInitPromise = (async () => {
         try {
-            const dbStreams = await liveStreamModel.getActiveLiveStreams();
-            for (const stream of dbStreams) {
-                const user = await userModel.getById(stream.streamerId);
-                activeStreams.set(stream.streamerId, {
-                    ...stream,
-                    streamerName: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
-                    streamerUsername: user ? user.username : 'unknown',
-                    streamerPicture: user ? user.profilePicture : null
-                });
+            db = new Database();
+            await db.initializeDatabase();
+            
+            // Initialize Models
+            userModel = new User(db);
+            quizModel = new Quiz(db);
+            liveStreamModel = new LiveStream(db);
+            messageModel = new Message(db);
+            backingTrackModel = new BackingTrack(db);
+            notificationModel = new Notification(db);
+            
+            console.log('✅ Database and models initialized');
+            
+            // Load active streams from database on startup
+            try {
+                const dbStreams = await liveStreamModel.getActiveLiveStreams();
+                for (const stream of dbStreams) {
+                    const user = await userModel.getById(stream.streamerId);
+                    activeStreams.set(stream.streamerId, {
+                        ...stream,
+                        streamerName: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
+                        streamerUsername: user ? user.username : 'unknown',
+                        streamerPicture: user ? user.profilePicture : null
+                    });
+                }
+                console.log(`✅ Loaded ${dbStreams.length} active streams from database`);
+            } catch (e) {
+                console.warn('Could not load active streams from database:', e.message);
             }
-            console.log(`✅ Loaded ${dbStreams.length} active streams from database`);
-        } catch (e) {
-            console.warn('Could not load active streams from database:', e.message);
+            
+            // Migrations: add new columns/tables if they don't exist
+            await db.run(`ALTER TABLE posts ADD COLUMN videoData TEXT`).catch(() => {});
+            await db.run(`CREATE TABLE IF NOT EXISTS post_comments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                postId INTEGER NOT NULL,
+                userId INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
+                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+            await db.run(`CREATE TABLE IF NOT EXISTS post_reposts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                postId INTEGER NOT NULL,
+                userId INTEGER NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(postId, userId),
+                FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
+                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+            await db.run(`ALTER TABLE messages ADD COLUMN deletedBySender INTEGER DEFAULT 0`).catch(() => {});
+            
+            // Create comment reaction tables
+            await db.run(`CREATE TABLE IF NOT EXISTS comment_likes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                commentId INTEGER NOT NULL,
+                userId INTEGER NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(commentId, userId),
+                FOREIGN KEY (commentId) REFERENCES post_comments(id) ON DELETE CASCADE,
+                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+            await db.run(`CREATE TABLE IF NOT EXISTS comment_replies (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                commentId INTEGER NOT NULL,
+                userId INTEGER NOT NULL,
+                content TEXT NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (commentId) REFERENCES post_comments(id) ON DELETE CASCADE,
+                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+            await db.run(`CREATE TABLE IF NOT EXISTS reply_likes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                replyId INTEGER NOT NULL,
+                userId INTEGER NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(replyId, userId),
+                FOREIGN KEY (replyId) REFERENCES comment_replies(id) ON DELETE CASCADE,
+                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+            )`);
+            
+            console.log('✅ Migrations applied');
+            dbInitialized = true;
+        } catch (error) {
+            console.error('❌ Failed to initialize database:', error);
+            throw error;
         }
-
-        // Migrations: add new columns/tables if they don't exist
-        await db.run(`ALTER TABLE posts ADD COLUMN videoData TEXT`).catch(() => {});
-        await db.run(`CREATE TABLE IF NOT EXISTS post_comments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            postId INTEGER NOT NULL,
-            userId INTEGER NOT NULL,
-            content TEXT NOT NULL,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
-            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-        )`);
-        await db.run(`CREATE TABLE IF NOT EXISTS post_reposts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            postId INTEGER NOT NULL,
-            userId INTEGER NOT NULL,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(postId, userId),
-            FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
-            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-        )`);
-        await db.run(`ALTER TABLE messages ADD COLUMN deletedBySender INTEGER DEFAULT 0`).catch(() => {});
-        
-        // Create comment reaction tables
-        await db.run(`CREATE TABLE IF NOT EXISTS comment_likes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            commentId INTEGER NOT NULL,
-            userId INTEGER NOT NULL,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(commentId, userId),
-            FOREIGN KEY (commentId) REFERENCES post_comments(id) ON DELETE CASCADE,
-            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-        )`);
-        await db.run(`CREATE TABLE IF NOT EXISTS comment_replies (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            commentId INTEGER NOT NULL,
-            userId INTEGER NOT NULL,
-            content TEXT NOT NULL,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (commentId) REFERENCES post_comments(id) ON DELETE CASCADE,
-            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-        )`);
-        await db.run(`CREATE TABLE IF NOT EXISTS reply_likes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            replyId INTEGER NOT NULL,
-            userId INTEGER NOT NULL,
-            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(replyId, userId),
-            FOREIGN KEY (replyId) REFERENCES comment_replies(id) ON DELETE CASCADE,
-            FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-        )`);
-        
-        console.log('✅ Migrations applied');
-    } catch (error) {
-        console.error('❌ Failed to initialize database:', error);
-        process.exit(1);
-    }
+    })();
+    
+    return dbInitPromise;
 }
 
-// ==================== ROOT ROUTE ====================
-// Serve index.html for root path
+// Middleware to ensure database is initialized before handling requests
+app.use(async (req, res, next) => {
+    if (!dbInitialized) {
+        try {
+            await initializeApp();
+        } catch (error) {
+            console.error('Database initialization failed:', error);
+            return res.status(503).json({ error: 'Service unavailable - database initialization failed' });
+        }
+    }
+    next();
+});
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Pages', 'index.html'));
 });
