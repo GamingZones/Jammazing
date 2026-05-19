@@ -1818,25 +1818,31 @@ app.get('/api/drive/file', async (req, res) => {
         
         // Decode the path
         const decodedPath = decodeURIComponent(path);
+        console.log(`[Drive API] Fetching: ${decodedPath}`);
         
         // Get file info from config
         const fileInfo = gdriveService.findFileByPath(decodedPath);
         
         if (!fileInfo) {
+            console.warn(`[Drive API] File not found in config: ${decodedPath}`);
             return res.status(404).json({ 
                 error: `File not found: ${decodedPath}`,
                 message: 'File ID not configured. Add it to config/drive-files.json'
             });
         }
         
+        console.log(`[Drive API] Downloading file ID: ${fileInfo.id}`);
+        
         // Download file from Google Drive and return as binary
         const buffer = await gdriveService.downloadFile(fileInfo.id);
+        console.log(`[Drive API] Downloaded ${buffer.length} bytes for ${decodedPath}`);
+        
         res.setHeader('Content-Type', 'audio/wav');
         res.setHeader('Content-Length', buffer.length);
         res.setHeader('Cache-Control', 'public, max-age=86400');
         res.send(buffer);
     } catch (error) {
-        console.error('Error in /api/drive/file:', error);
+        console.error('[Drive API] Error:', error.message);
         res.status(500).json({ error: error.message });
     }
 });

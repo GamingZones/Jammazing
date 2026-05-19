@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
 const FOLDER_ID = '1tQeF2ViGpwWsXqCmZ7QSIVVxFpNYDVaa';
 const CONFIG_PATH = path.join(__dirname, '..', 'config', 'drive-files.json');
@@ -32,24 +33,28 @@ function loadFileIdMap() {
 loadFileIdMap();
 
 /**
- * Download file from Google Drive
+ * Download file from Google Drive using HTTPS
  * Returns: Promise<Buffer> - audio file buffer
  */
 function downloadFile(fileId) {
     if (!fileId) return Promise.reject(new Error('No file ID provided'));
     
-    const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    
-    return fetch(downloadUrl)
-        .then(response => {
-            if (!response.ok) throw new Error(`Failed to download file: ${response.statusText}`);
-            return response.arrayBuffer();
-        })
-        .then(arrayBuffer => Buffer.from(arrayBuffer))
-        .catch(error => {
-            console.error(`Error downloading file ${fileId}:`, error);
-            throw error;
-        });
+    return new Promise((resolve, reject) => {
+        const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
+        
+        https.get(url, { redirect: 'follow' }, (response) => {
+            if (response.statusCode !== 200) {
+                return reject(new Error(`Google Drive returned status ${response.statusCode}`));
+            }
+            
+            const chunks = [];
+            response.on('data', chunk => chunks.push(chunk));
+            response.on('end', () => {
+                resolve(Buffer.concat(chunks));
+            });
+            response.on('error', reject);
+        }).on('error', reject);
+    });
 }
 
 /**
