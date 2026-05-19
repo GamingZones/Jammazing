@@ -144,18 +144,33 @@ class FirebaseDatabase {
 
             // Store in database with timeout
             console.log('📤 Writing user to Firebase at path: users/' + userId);
-            await withTimeout(this.db.ref(`users/${userId}`).set(user), 30000);
-            console.log('✅ User data written to Firebase');
+            try {
+                await this.db.ref(`users/${userId}`).set(user);
+                console.log('✅ User data written to Firebase');
+            } catch (writeErr) {
+                console.error('❌ Failed to write user:', writeErr.message);
+                throw writeErr;
+            }
             
             // Create email index for lookups
             console.log('📤 Writing email index at path: users_by_email/' + this.encodeEmail(userData.email));
-            await withTimeout(this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId), 30000);
-            console.log('✅ Email index written');
+            try {
+                await this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId);
+                console.log('✅ Email index written');
+            } catch (writeErr) {
+                console.error('❌ Failed to write email index:', writeErr.message);
+                throw writeErr;
+            }
             
             // Create username index
             console.log('📤 Writing username index at path: users_by_username/' + userData.username);
-            await withTimeout(this.db.ref(`users_by_username/${userData.username}`).set(userId), 5000);
-            console.log('✅ Username index written');
+            try {
+                await this.db.ref(`users_by_username/${userData.username}`).set(userId);
+                console.log('✅ Username index written');
+            } catch (writeErr) {
+                console.error('❌ Failed to write username index:', writeErr.message);
+                throw writeErr;
+            }
 
             console.log(`✅ User created successfully: ${userId}`);
             return user;
@@ -170,25 +185,35 @@ class FirebaseDatabase {
     async getUserByEmail(email) {
         try {
             console.log('🔍 getUserByEmail called for:', email);
-            console.log('📍 Looking up by encoded email:', this.encodeEmail(email));
+            console.log('� Database instance check:', this.db ? '✅ exists' : '❌ NULL');
             
             const encodedEmail = this.encodeEmail(email);
-            console.log('⏳ Querying users_by_email/' + encodedEmail);
-            const userId = (await withTimeout(this.db.ref(`users_by_email/${encodedEmail}`).once('value'), 30000)).val();
+            console.log('📍 Encoded email:', encodedEmail);
             
-            console.log('📝 userId lookup result:', userId ? `found: ${userId}` : 'null');
-            if (!userId) {
-                console.log('✅ No user found for email');
+            try {
+                console.log('⏳ Fetching from users_by_email/' + encodedEmail);
+                const snapshot = await this.db.ref(`users_by_email/${encodedEmail}`).once('value');
+                const userId = snapshot.val();
+                console.log('📝 userId result:', userId || 'null');
+                
+                if (!userId) {
+                    console.log('✅ No user found');
+                    return null;
+                }
+                
+                console.log('⏳ Fetching user from users/' + userId);
+                const userSnapshot = await this.db.ref(`users/${userId}`).once('value');
+                const user = userSnapshot.val();
+                console.log('✅ User fetched:', user ? 'found' : 'null');
+                
+                return user;
+            } catch (dbError) {
+                console.error('❌ Database query error:', dbError.message);
+                console.error('Error code:', dbError.code);
                 return null;
             }
-            
-            console.log('⏳ Fetching user document from users/' + userId);
-            const user = (await withTimeout(this.db.ref(`users/${userId}`).once('value'), 30000)).val();
-            console.log('✅ User document fetched');
-            return user;
         } catch (error) {
-            console.error('❌ Error getting user by email:', error.message);
-            console.error('Error type:', error.constructor.name);
+            console.error('❌ Error in getUserByEmail:', error.message);
             return null;
         }
     }
