@@ -1805,6 +1805,42 @@ app.get('/api/posts/:id/reactions', async (req, res) => {
     }
 });
 
+// ==================== GOOGLE DRIVE INTEGRATION ====================
+const gdriveService = require('./db/gdrive');
+
+// Get all audio files from Google Drive (organized by category)
+app.get('/api/drive/audio', async (req, res) => {
+    try {
+        const audioFiles = await gdriveService.getAudioFiles();
+        res.json(audioFiles);
+    } catch (error) {
+        console.error('Error fetching Drive audio files:', error);
+        res.status(500).json({ error: 'Failed to fetch audio files' });
+    }
+});
+
+// Get flat list of all audio files
+app.get('/api/drive/audio/all', async (req, res) => {
+    try {
+        const allFiles = await gdriveService.getAllAudioFiles();
+        res.json(allFiles);
+    } catch (error) {
+        console.error('Error fetching all Drive files:', error);
+        res.status(500).json({ error: 'Failed to fetch audio files' });
+    }
+});
+
+// Get files from specific folder
+app.get('/api/drive/folder/:folderid', async (req, res) => {
+    try {
+        const files = await gdriveService.listFilesInFolder(req.params.folderid);
+        res.json(files);
+    } catch (error) {
+        console.error('Error fetching Drive folder:', error);
+        res.status(500).json({ error: 'Failed to fetch folder' });
+    }
+});
+
 // Serve HTML files
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'home.html'));

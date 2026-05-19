@@ -914,6 +914,54 @@ function displayQuizzes(quizzes) {
     console.log('Quizzes:', quizzes);
 }
 
+// ==================== GOOGLE DRIVE AUDIO FILES ====================
+
+/**
+ * Fetch all audio files from Google Drive (organized by category)
+ * @returns {Promise<Object>} Audio files organized by category (Piano, Guitar, Drums, etc.)
+ */
+async function fetchAudioFilesFromDrive() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/drive/audio`);
+        if (!response.ok) throw new Error('Failed to fetch audio files');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching audio files from Drive:', error);
+        return {};
+    }
+}
+
+/**
+ * Fetch flat list of all audio files
+ * @returns {Promise<Array>} Array of all audio file objects
+ */
+async function fetchAllAudioFilesFromDrive() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/drive/audio/all`);
+        if (!response.ok) throw new Error('Failed to fetch audio files');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching all audio files from Drive:', error);
+        return [];
+    }
+}
+
+/**
+ * Fetch files from a specific Google Drive folder
+ * @param {string} folderId - Google Drive folder ID
+ * @returns {Promise<Array>} Array of files in the folder
+ */
+async function fetchDriveFolderFiles(folderId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/drive/folder/${folderId}`);
+        if (!response.ok) throw new Error('Failed to fetch folder');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching Drive folder:', error);
+        return [];
+    }
+}
+
 function displayLiveStreams(streams) {
     console.log('Streams:', streams);
 }
