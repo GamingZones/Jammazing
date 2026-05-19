@@ -158,6 +158,47 @@ app.get('/favicon.ico', (req, res) => {
     res.status(204).send();
 });
 
+// Diagnostic endpoint to test Firebase connection
+app.get('/api/test-firebase', async (req, res) => {
+    try {
+        console.log('🧪 Testing Firebase connection...');
+        console.log('   userModel exists?', userModel ? '✅ yes' : '❌ no');
+        console.log('   db exists?', db ? '✅ yes' : '❌ no');
+        console.log('   dbInitialized?', dbInitialized ? '✅ yes' : '❌ no');
+        
+        if (!db) {
+            return res.status(503).json({ error: 'Database not initialized yet', ready: false });
+        }
+        
+        // Try a simple write
+        const testId = 'test_' + Date.now();
+        const testData = { test: true, timestamp: new Date().toISOString() };
+        
+        console.log('   Attempting test write to test_connections/' + testId);
+        await db.ref(`test_connections/${testId}`).set(testData);
+        console.log('   ✅ Test write succeeded');
+        
+        // Try to read it back
+        const snapshot = await db.ref(`test_connections/${testId}`).once('value');
+        const readData = snapshot.val();
+        console.log('   ✅ Test read succeeded, data:', readData);
+        
+        res.json({
+            success: true,
+            message: 'Firebase connection working',
+            testId,
+            wrote: testData,
+            read: readData
+        });
+    } catch (error) {
+        console.error('❌ Firebase test failed:', error.message);
+        res.status(500).json({ 
+            error: error.message,
+            success: false 
+        });
+    }
+});
+
 // ==================== USER ROUTES ====================
 
 // Register a new user
