@@ -569,17 +569,23 @@
                 return Promise.resolve(null);
             }
             
-            // Properly URL encode the file name
-            const encodedFileName = encodeURIComponent(fileName);
-            
-            return fetch(`/Notes/Piano/${encodedFileName}`)
+            // Fetch file URL from backend (which finds it on Google Drive)
+            return fetch(`/api/drive/file?path=Piano/${encodeURIComponent(fileName)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`File not found: Piano/${fileName}`);
+                    return response.json();
+                })
+                .then(data => fetch(data.url))
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
                 .then(audioBuffer => {
                     pianoSamples[noteName] = audioBuffer;
                     return audioBuffer;
                 })
-                .catch(() => null);
+                .catch(error => {
+                    console.warn(`Failed to load piano sample ${noteName}:`, error);
+                    return null;
+                });
         }
 
         // Preload all 52 piano samples (natural notes only, from folder)
@@ -638,16 +644,23 @@
                 return Promise.resolve(null);
             }
             
-            const encodedFileName = encodeURIComponent(fileName);
-            
-            return fetch(`/Notes/Guitar/${encodedFileName}`)
+            // Fetch file URL from backend (which finds it on Google Drive)
+            return fetch(`/api/drive/file?path=Guitar/${encodeURIComponent(fileName)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`File not found: Guitar/${fileName}`);
+                    return response.json();
+                })
+                .then(data => fetch(data.url))
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
                 .then(audioBuffer => {
                     guitarSamples[noteName] = audioBuffer;
                     return audioBuffer;
                 })
-                .catch(() => null);
+                .catch(error => {
+                    console.warn(`Failed to load guitar sample ${noteName}:`, error);
+                    return null;
+                });
         }
 
         function loadDrumsSample(subType, index) {
@@ -661,7 +674,6 @@
             }
             
             const fileName = fileList[index % fileList.length];
-            const encodedFileName = encodeURIComponent(fileName);
             
             // Map subType to folder path
             const folderMap = {
@@ -684,14 +696,23 @@
             
             const folderPath = folderMap[subType] || subType;
             
-            return fetch(`/Notes/Drums/${encodeURIComponent(folderPath)}/${encodedFileName}`)
+            // Fetch file URL from backend (which finds it on Google Drive)
+            return fetch(`/api/drive/file?path=Drums/${encodeURIComponent(folderPath)}/${encodeURIComponent(fileName)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error(`File not found: Drums/${folderPath}/${fileName}`);
+                    return response.json();
+                })
+                .then(data => fetch(data.url))
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
                 .then(audioBuffer => {
                     drumsSamples[key] = audioBuffer;
                     return audioBuffer;
                 })
-                .catch(() => null);
+                .catch(error => {
+                    console.warn(`Failed to load drum sample ${subType}-${index}:`, error);
+                    return null;
+                });
         }
 
         // ========== DRUM SYNTHESIS ==========

@@ -6,6 +6,9 @@
 const FOLDER_ID = '1tQeF2ViGpwWsXqCmZ7QSIVVxFpNYDVaa';
 const API_KEY = process.env.GOOGLE_DRIVE_API_KEY || 'AIzaSyCHF_PlGlPkq6S-V-QV7VJUxNT2xJhN8QE'; // Free tier key
 
+// Cache for folder IDs to avoid repeated API calls
+const folderCache = new Map();
+
 /**
  * Get all files and folders from a Google Drive folder
  * @param {string} folderId - The Google Drive folder ID
@@ -26,6 +29,73 @@ async function listFilesInFolder(folderId) {
   } catch (error) {
     console.error('Error listing Drive files:', error);
     return [];
+  }
+}
+
+/**
+ * Find a folder by name within a parent folder
+ * @param {string} parentFolderId - Parent folder ID
+ * @param {string} folderName - Name of folder to find
+ * @returns {Promise<string|null>} Folder ID or null
+ */
+async function findFolderByName(parentFolderId, folderName) {
+  const cacheKey = `${parentFolderId}:${folderName}`;
+  if (folderCache.has(cacheKey)) {
+    return folderCache.get(cacheKey);
+  }
+
+  try {
+    const files = await listFilesInFolder(parentFolderId);
+    const folder = files.find(f => f.mimeType === 'application/vnd.google-apps.folder' && f.name.toLowerCase() === folderName.toLowerCase());
+    const folderId = folder ? folder.id : null;
+    folderCache.set(cacheKey, folderId);
+    return folderId;
+  } catch (error) {
+    console.error(`Error finding folder ${folderName}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Find a file by path (e.g., "Piano/a0", "Drums/Cymbals/Crash/crash1")
+ * @param {string} filePath - Path to file relative to root folder
+ * @returns {Promise<Object|null>} File object with id and downloadUrl, or null
+ */
+async function findFileByPath(filePath) {
+  try {
+    const parts = filePath.split('/');
+    const fileName = parts[parts.length - 1];
+    
+    let currentFolderId = FOLDER_ID;
+    
+    // Navigate through folder hierarchy
+    for (let i = 0; i < parts.length - 1; i++) {
+      const folderName = parts[i];
+      currentFolderId = await findFolderByName(currentFolderId, folderName);
+      if (!currentFolderId) {
+        console.warn(`Folder not found: ${folderName}`);
+        return null;
+      }
+    }
+    
+    // Find file in final folder
+    const files = await listFilesInFolder(currentFolderId);
+    const file = files.find(f => f.name.toLowerCase().startsWith(fileName.toLowerCase()));
+    
+    if (!file) {
+      console.warn(`File not found: ${filePath}`);
+      return null;
+    }
+    
+    return {
+      id: file.id,
+      name: file.name,
+      downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`,
+      previewUrl: `https://drive.google.com/uc?export=preview&id=${file.id}`
+    };
+  } catch (error) {
+    console.error('Error finding file by path:', error);
+    return null;
   }
 }
 
@@ -105,6 +175,8 @@ async function getAllAudioFiles() {
 
 module.exports = {
   listFilesInFolder,
+  findFolderByName,
+  findFileByPath,
   getFileUrl,
   getAudioFiles,
   getAllAudioFiles,

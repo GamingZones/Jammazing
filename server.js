@@ -56,7 +56,6 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/models', express.static(path.join(__dirname, 'models')));
-app.use('/Notes', express.static(path.join(__dirname, 'Notes')));
 app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
 app.use('/Pages', express.static(path.join(__dirname, 'Pages')));
 
@@ -1838,6 +1837,32 @@ app.get('/api/drive/folder/:folderid', async (req, res) => {
     } catch (error) {
         console.error('Error fetching Drive folder:', error);
         res.status(500).json({ error: 'Failed to fetch folder' });
+    }
+});
+
+// Get file by path (e.g., /api/drive/file?path=Piano/a0.wav or Piano/a0)
+// Returns direct download URL from Google Drive
+app.get('/api/drive/file', async (req, res) => {
+    try {
+        const { path } = req.query;
+        if (!path) {
+            return res.status(400).json({ error: 'path parameter required' });
+        }
+        
+        const fileInfo = await gdriveService.findFileByPath(path);
+        if (!fileInfo) {
+            return res.status(404).json({ error: `File not found: ${path}` });
+        }
+        
+        // Return URL that can be used for blob fetching
+        res.json({
+            url: fileInfo.downloadUrl,
+            name: fileInfo.name,
+            id: fileInfo.id
+        });
+    } catch (error) {
+        console.error('Error fetching file by path:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
