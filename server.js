@@ -124,31 +124,6 @@ async function initializeApp() {
     
     return dbInitPromise;
 }
-                content TEXT NOT NULL,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (commentId) REFERENCES post_comments(id) ON DELETE CASCADE,
-                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-            )`);
-            await db.run(`CREATE TABLE IF NOT EXISTS reply_likes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                replyId INTEGER NOT NULL,
-                userId INTEGER NOT NULL,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(replyId, userId),
-                FOREIGN KEY (replyId) REFERENCES comment_replies(id) ON DELETE CASCADE,
-                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-            )`);
-            
-            console.log('✅ Migrations applied');
-            dbInitialized = true;
-        } catch (error) {
-            console.error('❌ Failed to initialize database:', error);
-            throw error;
-        }
-    })();
-    
-    return dbInitPromise;
-}
 
 // Middleware to ensure database is initialized before handling requests
 app.use(async (req, res, next) => {
