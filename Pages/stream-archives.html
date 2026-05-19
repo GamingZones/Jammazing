@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stream Archives - JAMMAZING</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%23667eea'>♪</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/stream-archives.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>lucide.createIcons());</script>
+    <style>
+        /* Lucide icon global sizing */
+        [data-lucide], i[data-lucide] { display:inline-flex; align-items:center; justify-content:center; }
+        .nav-button-icon[data-lucide], i.nav-button-icon { width:20px; height:20px; stroke-width:1.75; }
+        .nav-item-bottom-icon[data-lucide], i.nav-item-bottom-icon { width:22px; height:22px; stroke-width:1.75; }
+        .settings-btn [data-lucide], .settings-btn i { width:18px; height:18px; }
+        .settings-dropdown-item [data-lucide], .settings-dropdown-item i { width:14px; height:14px; vertical-align:middle; }
+        button > [data-lucide], button > i { pointer-events:none; }
+    </style>
+</head>
+<body>
+    <script>
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+            document.documentElement.style.colorScheme = 'dark';
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+    <!-- Top Navigation -->
+    <nav class="navbar-top">
+        <div class="navbar-top-container">
+            <a href="../Pages/home.html" class="navbar-brand">Jammazing</a>
+            <div class="navbar-search-top">
+                <input type="text" class="search-input" placeholder="Search...">
+                <div style="position: relative;">
+                    <button class="settings-btn" id="settingsBtn" title="Settings"><i data-lucide="settings"></i></button>
+                    <div class="settings-dropdown" id="settingsDropdown">
+                        <button class="settings-dropdown-item" id="themeLightDark">
+                            <span><i data-lucide="moon" style="width:14px;height:14px;"></i> Dark Mode</span>
+                        </button>
+                        <button class="settings-dropdown-item" id="logoutBtn" onclick="logout()">
+                            <span><i data-lucide="log-out" style="width:14px;height:14px;"></i> Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-layout">
+        <!-- Left Sidebar - Profile -->
+        <div class="left-sidebar">
+            <a href="../Pages/profile.html" class="profile-card-line">
+                <div class="profile-avatar-large"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48" fill="none"><circle cx="32" cy="24" r="13" fill="rgba(255,255,255,0.85)"/><ellipse cx="32" cy="54" rx="22" ry="13" fill="rgba(255,255,255,0.85)"/></svg></div>
+                <div class="profile-info-line">
+                    <h3 id="profileName" class="profile-name">Loading...</h3>
+                    <p id="profileRole" class="profile-role">@username</p>
+                </div>
+            </a>
+
+            <!-- Navigation Buttons -->
+            <div class="navigation-buttons">
+                <a href="../Pages/live-streams.html" class="nav-button">
+                    <i data-lucide="video" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Live Streams</span>
+                </a>
+                <button id="searchNavBtn" class="nav-button">
+                    <i data-lucide="search" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Search People</span>
+                </button>
+                <a href="../Pages/ai-learning.html" class="nav-button">
+                    <i data-lucide="graduation-cap" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Quizzes</span>
+                </a>
+                <a href="../Pages/ai-jamming.html" class="nav-button">
+                    <i data-lucide="music" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Music Mixer</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Center Feed - Stream Archives Content -->
+        <div class="center-feed">
+            <div class="post">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 600;">Stream Archives</h3>
+                    <a href="../Pages/go-live.html" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 600;"><i data-lucide="radio" style="width:14px;height:14px;margin-right:4px;"></i>Go Live</a>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+                    <select id="sortSelector" style="background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 12px; border-radius: 6px; font-size: 13px; cursor: pointer;" onchange="sortArchives()">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="longest">Longest Duration</option>
+                        <option value="shortest">Shortest Duration</option>
+                    </select>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 16px;" id="archivesContainer">
+                    <!-- Archives will load dynamically here -->
+                </div>
+
+                <div id="emptyState" style="display: none; text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                    <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"><i data-lucide="inbox"></i></div>
+                    <p style="margin: 0; font-size: 16px; font-weight: 600;">No archived streams yet</p>
+                    <p style="margin: 8px 0 0 0; font-size: 13px;">Your completed streams will appear here</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Notifications & Friends -->
+        <div class="right-sidebar">
+            <div class="notifications-card">
+                <h3 class="sidebar-title">Notifications</h3>
+                <div class="notifications-list" id="sidebarNotifList"><div style="padding:8px;color:var(--text-secondary);font-size:13px;">Loading...</div></div>
+                <a href="../Pages/notifications.html" class="view-all-link">View all notifications</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for stream details -->
+    <div id="streamModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-primary); border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h4 style="margin: 0; font-size: 16px; font-weight: 700;">Stream Details</h4>
+                <button onclick="closeModal()" style="background: none; border: none; cursor: pointer; font-size: 20px; color: var(--text-secondary);">×</button>
+            </div>
+            <div id="modalContent" style="font-size: 13px;">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Messages Sidebar -->
+    <div id="messagesSidebar" class="friends-sidebar collapsed" style="cursor: pointer;">
+        <div class="friends-sidebar-header" onclick="toggleMessagesSidebar()" style="cursor: pointer;">
+            <h4>Messages</h4>
+            <button id="closeMessagesSidebar" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);" onclick="event.stopPropagation(); closeMessagesSidebar();"><i data-lucide="x"></i></button>
+        </div>
+        <div class="friends-sidebar-list" id="messagesSidebarList"><div style="padding:12px;color:var(--text-secondary);font-size:13px;">Loading...</div></div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        let userId = localStorage.getItem('userId');
+        let allArchives = [];
+
+        // Initialize page
+        window.addEventListener('load', async () => {
+            const userFirstName = localStorage.getItem('userFirstName') || 'User';
+            const userLastName = localStorage.getItem('userLastName') || 'Profile';
+            
+            document.getElementById('profileName').textContent = `${userFirstName} ${userLastName}`;
+            document.getElementById('profileRole').textContent = `@${userFirstName.toLowerCase()}${userLastName.toLowerCase()}`;
+            
+            const profilePicture = localStorage.getItem('userProfilePicture');
+            if (profilePicture) {
+                document.getElementById('profilePicture').src = profilePicture;
+            }
+            
+            // Load theme toggle
+            const themeLightDark = document.getElementById('themeLightDark');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsDropdown = document.getElementById('settingsDropdown');
+            
+            settingsBtn.addEventListener('click', () => {
+                settingsDropdown.style.display = settingsDropdown.style.display === 'block' ? 'none' : 'block';
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.settings-btn') && !e.target.closest('.settings-dropdown')) {
+                    settingsDropdown.style.display = 'none';
+                }
+            });
+            
+            themeLightDark.addEventListener('click', () => {
+                const theme = localStorage.getItem('theme');
+                if (theme === 'dark') {
+                    localStorage.setItem('theme', 'light');
+                    document.documentElement.style.colorScheme = 'light';
+                    document.body.classList.remove('dark-theme');
+                } else {
+                    localStorage.setItem('theme', 'dark');
+                    document.documentElement.style.colorScheme = 'dark';
+                    document.body.classList.add('dark-theme');
+                }
+                lucide.createIcons();
+            });
+            
+            // Load archives
+            await loadArchives();
+        });
+
+        async function loadArchives() {
+            try {
+                const response = await fetch(`http://localhost:3000/api/livestreams/user/${userId}/archives`);
+                allArchives = await response.json();
+                
+                if (allArchives.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('archivesContainer').style.display = 'none';
+                } else {
+                    document.getElementById('emptyState').style.display = 'none';
+                    document.getElementById('archivesContainer').style.display = 'grid';
+                    displayArchives(allArchives);
+                }
+            } catch (error) {
+                console.error('Error loading archives:', error);
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('emptyState').innerHTML = '<p style="color: #ef4444; margin: 0;">Error loading archives</p>';
+            }
+        }
+
+        function displayArchives(archives) {
+            const container = document.getElementById('archivesContainer');
+            container.innerHTML = archives.map(stream => {
+                const endTime = stream.endTime ? new Date(stream.endTime) : null;
+                const startTime = stream.actualStartTime ? new Date(stream.actualStartTime) : null;
+                
+                // Only calculate if both times are valid
+                let duration = 0;
+                if (startTime && endTime && !isNaN(startTime.getTime()) && !isNaN(endTime.getTime())) {
+                    const durationMs = Math.max(0, endTime - startTime);
+                    duration = Math.floor(durationMs / 1000);
+                }
+                
+                const durationMin = Math.floor(duration / 60);
+                const durationSec = duration % 60;
+                const durationStr = `${durationMin}:${durationSec.toString().padStart(2, '0')}`;
+                
+                const displayDate = endTime || startTime;
+                const formattedDate = displayDate ? displayDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : 'Unknown';
+                
+                return `
+                    <div class="archive-card" onclick="window.location.href='../Pages/streaming.html?archived=${stream.id}'" style="cursor: pointer;">
+                        <div class="archive-thumbnail">
+                            <i data-lucide="video" style="width: 48px; height: 48px;"></i>
+                        </div>
+                        <div class="archive-info">
+                            <div class="archive-title-duration">
+                                <h4 class="archive-title">${stream.title}</h4>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="archive-duration">${durationStr}</span>
+                                    <button onclick="deleteArchive(event, ${stream.id})" class="delete-archive-btn" title="Delete archive"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                                </div>
+                            </div>
+                            <div class="archive-category-date">
+                                <p class="archive-category">${stream.topic || 'Music'}</p>
+                                <span class="archive-date">${formattedDate}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        function sortArchives() {
+            const sortBy = document.getElementById('sortSelector').value;
+            let sorted = [...allArchives];
+            
+            if (sortBy === 'newest') {
+                sorted.sort((a, b) => new Date(b.endTime) - new Date(a.endTime));
+            } else if (sortBy === 'oldest') {
+                sorted.sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
+            } else if (sortBy === 'longest') {
+                sorted.sort((a, b) => {
+                    const aDuration = (new Date(a.endTime) - new Date(a.actualStartTime)) / 1000;
+                    const bDuration = (new Date(b.endTime) - new Date(b.actualStartTime)) / 1000;
+                    return bDuration - aDuration;
+                });
+            } else if (sortBy === 'shortest') {
+                sorted.sort((a, b) => {
+                    const aDuration = (new Date(a.endTime) - new Date(a.actualStartTime)) / 1000;
+                    const bDuration = (new Date(b.endTime) - new Date(b.actualStartTime)) / 1000;
+                    return aDuration - bDuration;
+                });
+            }
+            
+            displayArchives(sorted);
+        }
+
+        let pendingDeleteStreamId = null;
+
+        function deleteArchive(event, streamId) {
+            event.stopPropagation();
+            pendingDeleteStreamId = streamId;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        function confirmDelete() {
+            if (!pendingDeleteStreamId) return;
+            
+            fetch(`http://localhost:3000/api/livestreams/${pendingDeleteStreamId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Stream deleted:', data);
+                closeDeleteModal();
+                loadArchives();
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                alert('Error deleting stream');
+                closeDeleteModal();
+            });
+        }
+
+        function closeDeleteModal() {
+            pendingDeleteStreamId = null;
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function watchStream(streamId) {
+            // Navigate to the streaming page in watch mode with the stream ID
+            window.location.href = `../Pages/streaming.html?watchStream=${streamId}`;
+        }
+
+        function closeModal() {
+            document.getElementById('streamModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('streamModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('streamModal')) {
+                closeModal();
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '../Pages/login.html';
+        }
+
+        function toggleMessagesSidebar() {
+            const sidebar = document.getElementById('messagesSidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function closeMessagesSidebar() {
+            const sidebar = document.getElementById('messagesSidebar');
+            sidebar.classList.add('collapsed');
+        }
+    </script>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; text-align: center; max-width: 360px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);">
+            <div style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <i data-lucide="trash-2" style="width: 32px; height: 32px; color: #ef4444;"></i>
+            </div>
+            <h3 style="color: var(--text-primary); margin: 0 0 8px 0; font-size: 18px; font-weight: 600;">Delete Stream?</h3>
+            <p style="color: var(--text-secondary); margin: 0 0 24px 0; font-size: 14px; line-height: 1.5;">This action cannot be undone. The stream will be permanently deleted.</p>
+            <div style="display: flex; gap: 12px; align-items: center; justify-content: center;">
+                <button onclick="closeDeleteModal()" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background='transparent'">Cancel</button>
+                <button onclick="confirmDelete()" style="background: #ef4444; border: none; color: white; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">Delete</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

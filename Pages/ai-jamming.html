@@ -1,0 +1,1781 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Jamming - JAMMAZING</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/ai-jamming.css">
+
+    <style>
+        /* Hide page scrollbars */
+        html {
+            overflow: hidden !important;
+            overflow-x: hidden !important;
+        }
+        body {
+            overflow: hidden !important;
+            overflow-x: hidden !important;
+        }
+        
+        .instrument-btn, .note-btn { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 12px; transition: all 0.2s; }
+        .instrument-btn:hover { transform: scale(1.05); }
+        .note-btn:hover { background: var(--bg-primary); }
+        .instrument-btn.active, .note-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: #667eea; }
+        
+        /* Instrument button colors */
+        .instrument-btn[data-instrument="guitar"] { background: #22c55e; color: white; }
+        .instrument-btn[data-instrument="drums"] { background: #ef4444; color: white; }
+        .instrument-btn[data-instrument="piano"] { background: #8b5cf6; color: white; }
+        
+        .btn-control { padding: 12px 20px; margin: 8px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: white; transition: all 0.2s; }
+        .btn-control:hover { transform: scale(1.05); }
+        .btn-control:active { transform: scale(0.95); }
+        .btn-play { background: #22c55e; }
+        .btn-stop { background: #ef4444; }
+        .btn-record { background: #f59e0b; }
+        .btn-clear { background: #f59e0b; }
+        .btn-play-large { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); width: 120px; height: 120px; border-radius: 50%; font-size: 56px; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4), inset 0 2px 4px rgba(255,255,255,0.2); border: 3px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+        .btn-play-large:hover { transform: scale(1.15); box-shadow: 0 15px 40px rgba(34, 197, 94, 0.5), inset 0 2px 4px rgba(255,255,255,0.2); }
+        .btn-play-large:active { transform: scale(0.9); }
+        .add-instrument-btn { padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; font-size: 11px; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .add-instrument-btn:hover { background: var(--bg-secondary); transform: scale(1.05); }
+        .add-instrument-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        
+        .track-item { padding: 8px 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; border-left: 4px solid transparent; min-height: 160px; display: flex; flex-direction: column; justify-content: flex-start; }
+        .track-item:hover { background: var(--bg-primary); }
+        .track-item.selected { background: rgba(102, 126, 234, 0.2); border-left-color: currentColor; }
+        .track-name { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-item.selected .track-name { color: white; }
+        .track-waveform { height: 24px; background: var(--bg-primary); border-radius: 3px; margin-bottom: 6px; position: relative; overflow: hidden; }
+        .track-controls { display: flex; gap: 4px; }
+        .track-btn { width: 24px; height: 24px; border: none; border-radius: 4px; background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .track-btn:hover { background: var(--bg-primary); transform: scale(1.1); }
+        .track-btn-delete { background: #ef4444; color: white; }
+        .track-btn-delete:hover { background: #dc2626; }
+        .track-item.selected .track-btn { background: rgba(255,255,255,0.2); color: white; }
+        .track-item.selected .track-btn-delete { background: #dc2626; }
+        
+        .grid-cell { position: absolute; border: 1px solid rgba(102, 126, 234, 0.2); box-sizing: border-box; cursor: pointer; transition: all 0.1s; }
+        .grid-cell:hover { background: rgba(102, 126, 234, 0.3); opacity: 0.8; }
+        .grid-cell.note { border-color: rgba(102, 126, 234, 0.6); box-shadow: inset 0 0 8px rgba(102, 126, 234, 0.4); }
+        .grid-cell.playing { animation: pulse 0.2s ease-out; }
+        .grid-cell.beat-marker { background: rgba(102, 126, 234, 0.1) !important; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.7; } }
+        
+        .timeline-bar { width: 45px; height: 40px; line-height: 40px; border-right: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-secondary); white-space: nowrap; font-weight: 700; flex-shrink: 0; }
+        .timeline-bar.current-beat { background: rgba(102, 126, 234, 0.2); color: var(--text-primary); box-shadow: inset 0 0 8px rgba(102, 126, 234, 0.3); }
+        
+        /* HIDE ALL SCROLLBARS GLOBALLY */
+        html, body {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+        
+        html::-webkit-scrollbar, 
+        body::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        
+        /* Hide scrollbars for ALL elements by default */
+        div {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+        
+        div::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        
+        /* SPECIFICALLY show horizontal scrollbar for sequencerGrid */
+        #sequencerGrid {
+            scrollbar-width: auto !important;
+            -ms-overflow-style: auto !important;
+        }
+        
+        #sequencerGrid::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 20px !important;
+        }
+        
+        #sequencerGrid::-webkit-scrollbar-track {
+            background: transparent !important;
+        }
+        
+        #sequencerGrid::-webkit-scrollbar-thumb {
+            background: var(--border-color) !important;
+            border-radius: 6px;
+        }
+        
+        #sequencerGrid::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary) !important;
+        }
+        
+        #sequencerGrid::-webkit-scrollbar-corner {
+            background: transparent !important;
+        }
+        
+        /* SPECIFICALLY show horizontal scrollbar for sequencerScrollbar */
+        #sequencerScrollbar {
+            scrollbar-width: auto !important;
+            -ms-overflow-style: auto !important;
+        }
+        
+        #sequencerScrollbar::-webkit-scrollbar {
+            display: block !important;
+            width: 0 !important;
+            height: 20px !important;
+        }
+        
+        #sequencerScrollbar::-webkit-scrollbar-track {
+            background: transparent !important;
+        }
+        
+        #sequencerScrollbar::-webkit-scrollbar-thumb {
+            background: var(--border-color) !important;
+            border-radius: 6px;
+        }
+        
+        #sequencerScrollbar::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary) !important;
+        }
+        
+        /* SPECIFICALLY show vertical scrollbar for trackList */
+        #trackList {
+            scrollbar-width: auto !important;
+            -ms-overflow-style: auto !important;
+        }
+        
+        #trackList::-webkit-scrollbar {
+            display: block !important;
+            width: 12px !important;
+            height: 0 !important;
+        }
+        
+        #trackList::-webkit-scrollbar-track {
+            background: transparent !important;
+        }
+        
+        #trackList::-webkit-scrollbar-thumb {
+            background: var(--border-color) !important;
+            border-radius: 6px;
+        }
+        
+        #trackList::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary) !important;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+            document.documentElement.style.colorScheme = 'dark';
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+    <!-- Top Navigation -->
+    <nav class="navbar-top">
+        <div class="navbar-top-container">
+            <a href="../Pages/home.html" class="navbar-brand">Jammazing</a>
+            <div class="navbar-search-top">
+                <input type="text" class="search-input" placeholder="Search...">
+                <div style="position: relative;">
+                    <button class="settings-btn" id="settingsBtn" title="Settings">⚙️</button>
+                    <div class="settings-dropdown" id="settingsDropdown">
+                        <button class="settings-dropdown-item" id="themeLightDark">
+                            <span>🌙 Dark Mode</span>
+                        </button>
+                        <button class="settings-dropdown-item" id="logoutBtn" onclick="logout()">
+                            <span>🚪 Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-layout" style="grid-template-columns: 260px 1fr;">
+        <!-- Left Sidebar - Profile -->
+        <div class="left-sidebar">
+            <div class="instruments-section">
+                <div class="instruments-list" style="display: flex; flex-direction: column; height: 100%;">
+                    <div class="instrument-row" data-instrument="guitar">
+                        <button class="instrument-btn" data-instrument="guitar" title="Guitar">🎸</button>
+                        <span class="instrument-name">Guitar</span>
+                    </div>
+                    <div class="instrument-row" data-instrument="drums">
+                        <button class="instrument-btn" data-instrument="drums" title="Drums">🥁</button>
+                        <span class="instrument-name">Drums</span>
+                    </div>
+                    <div class="instrument-row" data-instrument="piano">
+                        <button class="instrument-btn" data-instrument="piano" title="Piano">🎹</button>
+                        <span class="instrument-name">Piano</span>
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-direction: column; padding: 8px 12px; border-top: 1px solid var(--border-color); margin-top: auto;">
+                        <button id="saveBeatsBtnLeft" style="width: 100%; padding: 10px 8px; background: linear-gradient(135deg, #667eea 0%, #5568d3 100%); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);">Save Beats</button>
+                        <button id="loadBeatsBtnLeft" style="width: 100%; padding: 10px 8px; background: linear-gradient(135deg, #764ba2 0%, #6a3d94 100%); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 6px rgba(118, 75, 162, 0.3);">Load Beats</button>
+                        <button id="exitBtnLeft" style="width: 100%; padding: 10px 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);">Exit</button>
+                    </div>
+                </div>
+                <div class="notes-container">
+                    <div class="notes-header" id="notesHeader"></div>
+                    <div class="notes-list" id="notesContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Feed - DAW Interface -->
+        <div class="center-feed" style="display: flex; flex-direction: column; gap: 0; padding: 0; min-width: 0;">
+            <!-- BPM + Transport + Time Display Bar -->
+            <div style="padding: 12px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                <!-- Left: Transport + BPM -->
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <button id="stopBtn2" class="btn-control btn-stop" style="width: 34px; height: 34px; padding: 0; margin: 0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: #dc2626; border: none; color: white; cursor: pointer; transition: all 0.2s;">⏹</button>
+                    <button id="pauseBtn2" style="width: 34px; height: 34px; padding: 0; margin: 0; border-radius: 4px; background: #f59e0b; border: none; color: white; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">⏸</button>
+                    <button id="playBtn2" style="width: 34px; height: 34px; padding: 0; margin: 0; border-radius: 50%; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); border: none; color: white; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);">▶</button>
+                </div>
+
+                <!-- Right: Time + Resolution -->
+                <div style="display: flex; gap: 14px; align-items: center;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <label style="color: var(--text-primary); font-weight: 600; font-size: 14px; min-width: 50px;">Time:</label>
+                        <span id="timeDisplay" style="font-size: 15px; font-weight: 600; color: var(--text-primary); font-family: monospace; width: 100px; text-align: center;">0:00.000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Sequencer Area -->
+            <div style="display: flex; flex: 1 1 280px; gap: 0; background: var(--bg-primary); overflow: hidden; min-width: 0;">
+                <!-- Left spacer removed -->
+
+                <!-- Timeline & Sequencer Grid -->
+                <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; border-left: 1px solid var(--border-color);">
+                    <!-- Timeline header -->
+                    <div id="timeline" style="height: 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; overflow-x: hidden; border-right: 1px solid var(--border-color); align-items: stretch; min-width: 0;">
+                        <!-- Timeline bars will be added here -->
+                    </div>
+
+                    <!-- Grid for sequencer with scroll sync -->
+                    <div id="sequencerGrid" style="flex: 1; overflow-x: hidden; overflow-y: hidden; background: var(--bg-primary); position: relative; min-width: 0;">
+                        <!-- Sequencer tracks will be added here -->
+                    </div>
+                    <div id="sequencerScrollbar" style="height: 22px; width: 100%; flex: 0 0 auto; overflow-x: auto; overflow-y: hidden; overflow: auto !important; border-top: 1px solid var(--border-color); background: var(--bg-secondary); scrollbar-width: auto !important; -ms-overflow-style: auto !important;">
+                        <div id="sequencerScrollbarInner" style="height: 1px; width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="right-sidebar" style="display: contents;">
+
+        <!-- Floating Friends Sidebar -->
+    <div id="friendsSidebar" class="friends-sidebar" style="display: none;">
+        <div class="friends-sidebar-header">
+            <h4 style="margin: 0; color: var(--text-primary);">Friends</h4>
+            <button id="closeFriendsSidebar" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);">✕</button>
+        </div>
+        <div class="friends-sidebar-list" id="friendsSidebarList"><div style="padding:8px;color:var(--text-secondary);font-size:13px;">Loading...</div></div>
+    </div>
+        </div>
+    </div>
+
+    <!-- Conversation Modal -->
+    <div id="conversationModal" style="display: none; position: fixed; bottom: 24px; right: 24px; z-index: 2000; width: 340px; height: 480px;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; width: 100%; height: 100%; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.3); overflow: hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:linear-gradient(135deg,#667eea,#764ba2);flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div id="chatAvatar" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+                    <div>
+                        <div id="chatTitle" style="color:white;font-weight:600;font-size:14px;">Chat</div>
+                        <div id="chatUsername" style="color:rgba(255,255,255,0.7);font-size:11px;"></div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;"><button id="chatProfileBtn" style="background:rgba(255,255,255,0.1);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ccc;" title="View Profile"><i data-lucide="user" style="width:14px;height:14px;"></i></button><button onclick="closeConversationModal()" style="background:rgba(255,255,255,0.1);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ccc;"><i data-lucide="x" style="width:14px;height:14px;"></i></button></div>
+            </div>
+            <div id="messagesContainer" class="messages-container" style="flex-grow:1;overflow-y:auto;padding:12px;background:var(--bg-primary);"></div>
+            <div style="padding:10px 12px;border-top:1px solid var(--border-color);display:flex;gap:8px;flex-shrink:0;">
+                <input type="hidden" id="recipientId" value="">
+                <input type="text" id="messageInput" placeholder="Type a message..." style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-primary);outline:none;font-size:13px;" onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;color:white;padding:8px 16px;border-radius:20px;cursor:pointer;font-weight:500;font-size:13px;">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Beats Modal -->
+    <div id="saveBeatModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border-radius: 12px; padding: 24px; width: 90%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+            <div style="color: var(--text-primary); font-size: 18px; font-weight: 600; margin-bottom: 16px;">Save Beats</div>
+            <input type="text" id="beatNameInput" placeholder="Enter beat name..." style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary); color: var(--text-primary); outline: none; font-size: 14px; box-sizing: border-box; margin-bottom: 16px;">
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="cancelSaveBtn" style="padding: 10px 20px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                <button id="confirmSaveBtn" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #5568d3 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Beats Modal -->
+    <div id="loadBeatsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border-radius: 12px; padding: 24px; width: 90%; max-width: 600px; max-height: 80vh; box-shadow: 0 8px 32px rgba(0,0,0,0.4); display: flex; flex-direction: column;">
+            <div style="color: var(--text-primary); font-size: 18px; font-weight: 600; margin-bottom: 16px;">Load Beats</div>
+            <div id="savedBeatsList" style="flex: 1; overflow-y: auto; margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-primary);">
+                <div style="padding: 16px; color: var(--text-secondary); text-align: center;">No saved beats</div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="cancelLoadBtn" style="padding: 10px 20px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px; width: 90%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center;">
+            <div style="width: 64px; height: 64px; margin: 0 auto 20px; background: transparent; border: 3px solid #ef4444; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #ef4444;">⊞</div>
+            <div style="color: var(--text-primary); font-size: 20px; font-weight: 600; margin-bottom: 12px;">Delete Beat?</div>
+            <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Are you sure you want to delete "<span id="deleteBeatName"></span>"?</div>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="deleteConfirmCancel" style="padding: 10px 24px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Cancel</button>
+                <button id="deleteConfirmOk" style="padding: 10px 24px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exit Confirmation Modal -->
+    <div id="exitConfirmModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px; width: 90%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center;">
+            <div style="width: 64px; height: 64px; margin: 0 auto 20px; background: transparent; border: 3px solid #dc2626; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #dc2626;">⊞</div>
+            <div style="color: var(--text-primary); font-size: 20px; font-weight: 600; margin-bottom: 12px;">Exit?</div>
+            <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Are you sure you want to exit? Unsaved changes will be lost.</div>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="exitConfirmCancel" style="padding: 10px 24px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Cancel</button>
+                <button id="exitConfirmOk" style="padding: 10px 24px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ========== DAW STATE ==========
+        let beats = {}; // legacy
+        let isPlaying = false;
+        let isPaused = false;
+        let currentTime = 0;
+        let bpm = 120;
+        let draggedInstrument = null;
+        const cellWidth = 45;
+        const cellHeight = 20;
+        const beatsPerPage = 16;
+        const totalBeats = 300;
+        const notes = [
+            // Full 88-key piano range (A0 to C8)
+            'A0', 'A♯0', 'B0',
+            'C1', 'C♯1', 'D1', 'D♯1', 'E1', 'F1', 'F♯1', 'G1', 'G♯1', 'A1', 'A♯1', 'B1',
+            'C2', 'C♯2', 'D2', 'D♯2', 'E2', 'F2', 'F♯2', 'G2', 'G♯2', 'A2', 'A♯2', 'B2',
+            'C3', 'C♯3', 'D3', 'D♯3', 'E3', 'F3', 'F♯3', 'G3', 'G♯3', 'A3', 'A♯3', 'B3',
+            'C4', 'C♯4', 'D4', 'D♯4', 'E4', 'F4', 'F♯4', 'G4', 'G♯4', 'A4', 'A♯4', 'B4',
+            'C5', 'C♯5', 'D5', 'D♯5', 'E5', 'F5', 'F♯5', 'G5', 'G♯5', 'A5', 'A♯5', 'B5',
+            'C6', 'C♯6', 'D6', 'D♯6', 'E6', 'F6', 'F♯6', 'G6', 'G♯6', 'A6', 'A♯6', 'B6',
+            'C7', 'C♯7', 'D7', 'D♯7', 'E7', 'F7', 'F♯7', 'G7', 'G♯7', 'A7', 'A♯7', 'B7',
+            'C8'
+        ];
+
+        // Guitar available notes (only notes with actual files)
+        const guitarNotes = ['E2', 'F2', 'F2/F3', 'A2/A3', 'B2', 'B3', 'B3/B4', 'B4', 'C♯3', 'C♯3/C♯4', 'C♯4', 'D3', 'D5', 'D♯4', 'E4'];
+
+        // Free-placement notes (drop anywhere)
+        let placedNotes = []; // { id, x, y, timeMs, instrument, note, width, height, triggeredAtCycle }
+        let draggedPlacedNoteId = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let noteIdCounter = 1;
+
+        const instrumentConfigs = {
+            guitar: { name: '🎸 Guitar', color: '#22c55e', type: 'melodic' },
+            drums: { name: '🥁 Drums', color: '#ef4444', type: 'drums', subTypes: ['kick', 'snare', 'clap', 'crash', 'hihat', 'ride', 'splash', 'floor-tom', 'high-tom', 'mid-tom', 'blast-block', 'cowbell', 'egg-shaker', 'sleigh-bells', 'stick-hits'] },
+            piano: { name: '🎹 Piano', color: '#ec4899', type: 'melodic' }
+        };
+
+        // Web Audio API Context
+        let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Note frequencies (Hz) - Full 88-key piano range (A0 to C8)
+        const noteFrequencies = {
+            'A0': 27.50, 'A♯0': 29.14, 'B0': 30.87,
+            'C1': 32.70, 'C♯1': 34.65, 'D1': 36.71, 'D♯1': 38.89, 'E1': 41.20, 'F1': 43.65, 'F♯1': 46.25, 'G1': 49.00, 'G♯1': 51.96, 'A1': 55.00, 'A♯1': 58.27, 'B1': 61.74,
+            'C2': 65.41, 'C♯2': 69.30, 'D2': 73.42, 'D♯2': 77.78, 'E2': 82.41, 'F2': 87.31, 'F♯2': 92.50, 'G2': 98.00, 'G♯2': 103.83, 'A2': 110.00, 'A♯2': 116.54, 'B2': 123.47,
+            'C3': 130.81, 'C♯3': 138.59, 'D3': 146.83, 'D♯3': 155.56, 'E3': 164.81, 'F3': 174.61, 'F♯3': 185.00, 'G3': 196.00, 'G♯3': 207.65, 'A3': 220.00, 'A♯3': 233.08, 'B3': 246.94,
+            'C4': 261.63, 'C♯4': 277.18, 'D4': 293.66, 'D♯4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F♯4': 369.99, 'G4': 392.00, 'G♯4': 415.30, 'A4': 440.00, 'A♯4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C♯5': 554.37, 'D5': 587.33, 'D♯5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F♯5': 739.99, 'G5': 783.99, 'G♯5': 830.61, 'A5': 880.00, 'A♯5': 932.33, 'B5': 987.77,
+            'C6': 1046.50, 'C♯6': 1108.73, 'D6': 1174.66, 'D♯6': 1244.51, 'E6': 1318.51, 'F6': 1396.91, 'F♯6': 1479.98, 'G6': 1567.98, 'G♯6': 1661.22, 'A6': 1760.00, 'A♯6': 1864.66, 'B6': 1975.53,
+            'C7': 2093.00, 'C♯7': 2217.46, 'D7': 2349.32, 'D♯7': 2489.02, 'E7': 2637.02, 'F7': 2793.83, 'F♯7': 2959.96, 'G7': 3135.96, 'G♯7': 3322.44, 'A7': 3520.00, 'A♯7': 3729.31, 'B7': 3951.07,
+            'C8': 4186.01
+        };
+
+        // Piano audio buffer cache
+        const pianoSamples = {};
+        const pianoNotesAvailable = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+        // Load piano samples
+        // Map note names to actual file names in Notes/Piano folder
+        const pianoFileMap = {
+            'a0': '1. a0.wav',
+            'a#0': '2. a#0.wav',
+            'b0': '3. b0.wav',
+            'c1': '4. c1.wav',
+            'c#1': '5. c#1.wav',
+            'd1': '6. d1.wav',
+            'd#1': '7. d#1.wav',
+            'e1': '8. e1.wav',
+            'f1': '9. f1.wav',
+            'f#1': '10. f#1.wav',
+            'g1': '11. g1.wav',
+            'g#1': '12. g#1.wav',
+            'a1': '13. a1.wav',
+            'a#1': '14. a#1.wav',
+            'b1': '15. b1.wav',
+            'c2': '16. c2.wav',
+            'c#2': '17. c#2.wav',
+            'd2': '18. d2.wav',
+            'd#2': '19. d#2.wav',
+            'e2': '20. e2.wav',
+            'f2': '21. f2.wav',
+            'f#2': '22. f#2.wav',
+            'g2': '23. g2.wav',
+            'g#2': '24. g#2.wav',
+            'a2': '25. a2.wav',
+            'a#2': '26. a#2.wav',
+            'b2': '27. b2.wav',
+            'c3': '28. c3.wav',
+            'c#3': '29. c#3.wav',
+            'd3': '30. d3.wav',
+            'd#3': '31. d#3.wav',
+            'e3': '32. e3.wav',
+            'f3': '33. f3.wav',
+            'f#3': '34. f#3.wav',
+            'g3': '35. g3.wav',
+            'g#3': '36. g#3.wav',
+            'a3': '37. a3.wav',
+            'a#3': '38. a#3.wav',
+            'b3': '39. b3.wav',
+            'c4': '40. c4.wav',
+            'c#4': '41. c#4.wav',
+            'd4': '42. d4.wav',
+            'd#4': '43. d#4.wav',
+            'e4': '44. e4.wav',
+            'f4': '45. f4.wav',
+            'f#4': '46. f#4.wav',
+            'g4': '47. g4.wav',
+            'g#4': '48. g#4.wav',
+            'a4': '49. a4.wav',
+            'a#4': '50. a#4.wav',
+            'b4': '51. b4.wav',
+            'c5': '52. c5.wav',
+            'c#5': '53. c#5.wav',
+            'd5': '54. d5.wav',
+            'd#5': '55. d#5.wav',
+            'e5': '56. e5.wav',
+            'f5': '57. f5.wav',
+            'f#5': '58. f#5.wav',
+            'g5': '59. g5.wav',
+            'g#5': '60. g#5.wav',
+            'a5': '61. a5.wav',
+            'a#5': '62. a#5.wav',
+            'b5': '63. b5.wav',
+            'c6': '64. c6.wav',
+            'c#6': '65. c#6.wav',
+            'd6': '66. d6.wav',
+            'd#6': '67. d#6.wav',
+            'e6': '68. e6.wav',
+            'f6': '69. f6.wav',
+            'f#6': '70. f#6.wav',
+            'g6': '71. g6.wav',
+            'g#6': '72. g#6.wav',
+            'a6': '73. a6.wav',
+            'a#6': '74. a#6.wav',
+            'b6': '75. b6.wav',
+            'c7': '76. c7.wav',
+            'c#7': '77. c#7.wav',
+            'd7': '78. d7.wav',
+            'd#7': '79. d#7.wav',
+            'e7': '80. e7.wav',
+            'f7': '81. f7.wav',
+            'f#7': '82. f#7.wav',
+            'g7': '83. g7.wav',
+            'g#7': '84. g#7.wav',
+            'a7': '85. a7.wav',
+            'a#7': '86. a#7.wav',
+            'b7': '87. b7.wav',
+            'c8': '88. c8.wav'
+        };
+
+        // Guitar audio buffer cache and file map
+        const guitarSamples = {};
+        const guitarFileMap = {
+            'a2': 'A2A3.wav',
+            'a3': 'A3.wav',
+            'b2': 'B2.wav',
+            'b3': 'B3.wav',
+            'b3b4': 'B3B4.wav',
+            'b4': 'B4.wav',
+            'c#3': 'C#3.wav',
+            'c#3c#4': 'C#3C#4.wav',
+            'c#4': 'C#4.wav',
+            'd#4': 'D#4.wav',
+            'd3': 'D3.wav',
+            'd5': 'D5.wav',
+            'e2': 'E2.wav',
+            'e4': 'E4.wav',
+            'f2': 'F2.wav',
+            'f3': 'F2F3.wav'
+        };
+
+        // Drums audio buffer cache and file maps by subType
+        const drumsSamples = {};
+        const drumsFileMap = {
+            'kick': ['RD_K_1.wav', 'RD_K_2.wav', 'RD_K_3.wav', 'RD_K_4.wav', 'RD_K_5.wav', 'RD_K_6.wav', 'RD_K_7.wav', 'RD_K_8.wav', 'RD_K_9.wav', 'RD_K_10.wav'],
+            'snare': ['RD_S_1.wav', 'RD_S_2.wav', 'RD_S_3.wav', 'RD_S_4.wav', 'RD_S_5.wav', 'RD_S_6.wav', 'RD_S_7.wav', 'RD_S_8.wav', 'RD_S_9.wav', 'RD_S_10.wav', 'RD_S_11.wav', 'RD_S_12.wav', 'RD_S_13.wav', 'RD_S_14.wav', 'RD_S_15.wav', 'RD_S_16.wav'],
+            'clap': ['RD_C_1.wav', 'RD_C_2.wav', 'RD_C_3.wav', 'RD_C_4.wav', 'RD_C_5.wav', 'RD_C_6.wav', 'RD_C_7.wav', 'RD_C_8.wav'],
+            'crash': ['RD_C_C_1.wav', 'RD_C_C_2.wav', 'RD_C_C_3.wav', 'RD_C_C_4.wav', 'RD_C_C_5.wav', 'RD_C_C_6.wav', 'RD_C_C_7.wav', 'RD_C_C_8.wav', 'RD_C_C_9.wav'],
+            'hihat': ['RD_C_HH_1.wav', 'RD_C_HH_2.wav', 'RD_C_HH_3.wav', 'RD_C_HH_4.wav', 'RD_C_HH_5.wav', 'RD_C_HH_6.wav', 'RD_C_HH_7.wav', 'RD_C_HH_8.wav', 'RD_C_HH_9.wav', 'RD_C_HH_10.wav', 'RD_C_HH_11.wav', 'RD_C_HH_12.wav', 'RD_C_HH_13.wav', 'RD_C_HH_14.wav', 'RD_C_HH_15.wav'],
+            'ride': ['RD_C_R_1.wav', 'RD_C_R_2.wav', 'RD_C_R_3.wav', 'RD_C_R_4.wav', 'RD_C_R_5.wav', 'RD_C_R_6.wav', 'RD_C_R_7.wav', 'RD_C_R_8.wav', 'RD_C_R_9.wav', 'RD_C_R_10.wav', 'RD_C_R_11.wav', 'RD_C_R_12.wav'],
+            'splash': ['RD_C_S_1.wav', 'RD_C_S_2.wav', 'RD_C_S_3.wav', 'RD_C_S_4.wav', 'RD_C_S_5.wav', 'RD_C_S_6.wav', 'RD_C_S_7.wav', 'RD_C_S_8.wav', 'RD_C_S_9.wav'],
+            'floor-tom': ['RD_T_FT_1.wav', 'RD_T_FT_2.wav', 'RD_T_FT_3.wav', 'RD_T_FT_4.wav', 'RD_T_FT_5.wav', 'RD_T_FT_6.wav', 'RD_T_FT_7.wav', 'RD_T_FT_8.wav'],
+            'high-tom': ['RD_T_HT_1.wav', 'RD_T_HT_2.wav', 'RD_T_HT_3.wav', 'RD_T_HT_4.wav', 'RD_T_HT_5.wav', 'RD_T_HT_6.wav', 'RD_T_HT_7.wav', 'RD_T_HT_8.wav', 'RD_T_HT_9.wav'],
+            'mid-tom': ['RD_T_MT_1.wav', 'RD_T_MT_2.wav', 'RD_T_MT_3.wav', 'RD_T_MT_4.wav', 'RD_T_MT_5.wav', 'RD_T_MT_6.wav', 'RD_T_MT_7.wav', 'RD_T_MT_8.wav', 'RD_T_MT_9.wav', 'RD_T_MT_10.wav'],
+            'blast-block': ['RD_P_BB_1.wav', 'RD_P_BB_2.wav', 'RD_P_BB_3.wav', 'RD_P_BB_4.wav', 'RD_P_BB_5.wav', 'RD_P_BB_6.wav', 'RD_P_BB_7.wav', 'RD_P_BB_8.wav', 'RD_P_BB_9.wav', 'RD_P_BB_10.wav'],
+            'cowbell': ['RD_P_C_1.wav', 'RD_P_C_2.wav', 'RD_P_C_3.wav', 'RD_P_C_4.wav', 'RD_P_C_5.wav', 'RD_P_C_6.wav', 'RD_P_C_7.wav', 'RD_P_C_8.wav'],
+            'egg-shaker': ['RD_P_ES_1.wav', 'RD_P_ES_2.wav', 'RD_P_ES_3.wav', 'RD_P_ES_4.wav', 'RD_P_ES_5.wav', 'RD_P_ES_6.wav', 'RD_P_ES_7.wav', 'RD_P_ES_8.wav', 'RD_P_ES_9.wav', 'RD_P_ES_10.wav', 'RD_P_ES_11.wav', 'RD_P_ES_12_100BPM.wav', 'RD_P_ES_13_100BPM.wav', 'RD_P_ES_14_128BPM.wav', 'RD_P_ES_15_128BPM.wav', 'RD_P_ES_16_160BPM.wav'],
+            'sleigh-bells': ['RD_P_SB_1.wav', 'RD_P_SB_2.wav', 'RD_P_SB_3.wav', 'RD_P_SB_4.wav', 'RD_P_SB_5.wav'],
+            'stick-hits': ['RD_P_SH_1.wav', 'RD_P_SH_2.wav', 'RD_P_SH_3.wav']
+        };
+
+
+        function loadPianoSample(noteName) {
+            if (pianoSamples[noteName]) return Promise.resolve(pianoSamples[noteName]);
+            
+            // Get the actual file name from the map
+            const fileName = pianoFileMap[noteName];
+            if (!fileName) {
+                console.warn(`No file mapping for note: ${noteName}`);
+                return Promise.resolve(null);
+            }
+            
+            // Properly URL encode the file name
+            const encodedFileName = encodeURIComponent(fileName);
+            
+            return fetch(`/Notes/Piano/${encodedFileName}`)
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    pianoSamples[noteName] = audioBuffer;
+                    return audioBuffer;
+                })
+                .catch(() => null);
+        }
+
+        // Preload all 52 piano samples (natural notes only, from folder)
+        function preloadPianoSamples() {
+            // Folder contains all 88 piano notes with sharps: a0-a7, a#0-a#7, b0-b7, c1-c8, c#1-c#7, etc.
+            const notesToLoad = [
+                'a0', 'a#0', 'b0',
+                'c1', 'c#1', 'd1', 'd#1', 'e1', 'f1', 'f#1', 'g1', 'g#1',
+                'a1', 'a#1', 'b1',
+                'c2', 'c#2', 'd2', 'd#2', 'e2', 'f2', 'f#2', 'g2', 'g#2',
+                'a2', 'a#2', 'b2',
+                'c3', 'c#3', 'd3', 'd#3', 'e3', 'f3', 'f#3', 'g3', 'g#3',
+                'a3', 'a#3', 'b3',
+                'c4', 'c#4', 'd4', 'd#4', 'e4', 'f4', 'f#4', 'g4', 'g#4',
+                'a4', 'a#4', 'b4',
+                'c5', 'c#5', 'd5', 'd#5', 'e5', 'f5', 'f#5', 'g5', 'g#5',
+                'a5', 'a#5', 'b5',
+                'c6', 'c#6', 'd6', 'd#6', 'e6', 'f6', 'f#6', 'g6', 'g#6',
+                'a6', 'a#6', 'b6',
+                'c7', 'c#7', 'd7', 'd#7', 'e7', 'f7', 'f#7', 'g7', 'g#7',
+                'a7', 'a#7', 'b7',
+                'c8'
+            ];
+            
+            notesToLoad.forEach(noteName => {
+                loadPianoSample(noteName).catch(() => {
+                    // Silent fail for any that don't exist
+                });
+            });
+        }
+
+        // Start preloading samples when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', preloadPianoSamples);
+        } else {
+            preloadPianoSamples();
+        }
+
+        function loadGuitarSample(noteName) {
+            // Handle slash notation like "F2/F3" -> map to "f3"
+            let mapKey = noteName.toLowerCase();
+            
+            // If contains slash, use the second note (after the slash)
+            if (mapKey.includes('/')) {
+                const parts = mapKey.split('/');
+                mapKey = parts[1].replace(/♯/g, '#').toLowerCase();
+            } else {
+                mapKey = mapKey.replace(/♯/g, '#').toLowerCase();
+            }
+            
+            if (guitarSamples[noteName]) return Promise.resolve(guitarSamples[noteName]);
+            
+            const fileName = guitarFileMap[mapKey];
+            if (!fileName) {
+                console.warn(`No guitar file for note: ${noteName} (mapKey: ${mapKey})`);
+                return Promise.resolve(null);
+            }
+            
+            const encodedFileName = encodeURIComponent(fileName);
+            
+            return fetch(`/Notes/Guitar/${encodedFileName}`)
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    guitarSamples[noteName] = audioBuffer;
+                    return audioBuffer;
+                })
+                .catch(() => null);
+        }
+
+        function loadDrumsSample(subType, index) {
+            const key = `${subType}-${index}`;
+            if (drumsSamples[key]) return Promise.resolve(drumsSamples[key]);
+            
+            const fileList = drumsFileMap[subType];
+            if (!fileList) {
+                console.warn(`No drum files for subType: ${subType}`);
+                return Promise.resolve(null);
+            }
+            
+            const fileName = fileList[index % fileList.length];
+            const encodedFileName = encodeURIComponent(fileName);
+            
+            // Map subType to folder path
+            const folderMap = {
+                'kick': 'Kick',
+                'snare': 'Snare',
+                'clap': 'Claps',
+                'crash': 'Cymbals/Crash',
+                'hihat': 'Cymbals/Hi Hat',
+                'ride': 'Cymbals/Ride',
+                'splash': 'Cymbals/Splash',
+                'floor-tom': 'Toms/Floor Tom',
+                'high-tom': 'Toms/High Tom',
+                'mid-tom': 'Toms/Mid Tom',
+                'blast-block': 'Percussion/Blast Block',
+                'cowbell': 'Percussion/Cowbell',
+                'egg-shaker': 'Percussion/Egg Shaker',
+                'sleigh-bells': 'Percussion/Sleigh Bells',
+                'stick-hits': 'Percussion/Stick Hits'
+            };
+            
+            const folderPath = folderMap[subType] || subType;
+            
+            return fetch(`/Notes/Drums/${encodeURIComponent(folderPath)}/${encodedFileName}`)
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    drumsSamples[key] = audioBuffer;
+                    return audioBuffer;
+                })
+                .catch(() => null);
+        }
+
+        // ========== DRUM SYNTHESIS ==========
+        // All drum synthesis removed - using samples only
+
+        // ========== SYNTH CREATION ==========
+        // All synthesis removed - using samples only
+
+        function playNote(frequency, instrument, duration = 0.5, passedNoteName = null) {
+            const now = audioContext.currentTime;
+            
+            // For drums, handle directly by subType
+            if (instrument === 'drums' && passedNoteName) {
+                const subType = passedNoteName;
+                const index = Math.floor(Math.random() * (drumsFileMap[subType]?.length || 1));
+                
+                loadDrumsSample(subType, index).then(buffer => {
+                    if (buffer) {
+                        try {
+                            const source = audioContext.createBufferSource();
+                            source.buffer = buffer;
+                            
+                            const gainNode = audioContext.createGain();
+                            gainNode.gain.setValueAtTime(0.5, now);
+                            gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration * 0.7);
+                            
+                            source.connect(gainNode);
+                            gainNode.connect(audioContext.destination);
+                            
+                            source.start(now);
+                            source.stop(now + Math.min(buffer.duration, duration));
+                        } catch (e) {
+                            console.warn('Error playing drum sample:', e);
+                        }
+                    }
+                }).catch(() => {});
+                return;
+            }
+            
+            // Try to find the note name from frequency (or use passed note name if available)
+            let noteName = passedNoteName;
+            if (!noteName) {
+                for (const [note, freq] of Object.entries(noteFrequencies)) {
+                    if (Math.abs(freq - frequency) < 1) {
+                        noteName = note;
+                        break;
+                    }
+                }
+            }
+
+            // Extract note key and octave (e.g., "C4" from "C4", "C♯4" from "C♯4")
+            let noteKey = noteName ? noteName.replace(/\d+$/, '') : null;
+            let octaveMatch = noteName ? noteName.match(/\d+$/) : null;
+            let octave = octaveMatch ? parseInt(octaveMatch[0]) : null;
+
+            // For piano instrument, use available audio samples
+            if (instrument === 'piano' && noteName) {
+                let sampleName = null;
+                
+                // Direct mapping: convert UI note names (with ♯) to file names (with #)
+                if (noteKey.includes('♯')) {
+                    // Replace ♯ with # for file name
+                    sampleName = `${noteKey.charAt(0).toLowerCase()}#${octave}`;
+                } else {
+                    // Natural note - use as is
+                    sampleName = `${noteKey.toLowerCase()}${octave}`;
+                }
+                
+                if (sampleName && pianoSamples[sampleName]) {
+                    try {
+                        const source = audioContext.createBufferSource();
+                        source.buffer = pianoSamples[sampleName];
+                        
+                        const gainNode = audioContext.createGain();
+                        gainNode.gain.setValueAtTime(0.7, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration * 0.8);
+                        
+                        source.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        source.start(now);
+                        source.stop(now + Math.min(source.buffer.duration, duration));
+                        return;
+                    } catch (e) {
+                        console.warn('Error playing piano sample:', e);
+                    }
+                } else if (sampleName) {
+                    // Try to load on-demand
+                    loadPianoSample(sampleName).then(buffer => {
+                        if (buffer) {
+                            try {
+                                const source = audioContext.createBufferSource();
+                                source.buffer = buffer;
+                                
+                                const gainNode = audioContext.createGain();
+                                gainNode.gain.setValueAtTime(0.7, now);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration * 0.8);
+                                
+                                source.connect(gainNode);
+                                gainNode.connect(audioContext.destination);
+                                
+                                source.start(now);
+                                source.stop(now + Math.min(buffer.duration, duration));
+                            } catch (e) {
+                                console.warn('Error playing loaded piano sample:', e);
+                            }
+                        }
+                    }).catch(() => {});
+                }
+            }
+
+            // For guitar instrument, use available audio samples
+            if (instrument === 'guitar' && noteName) {
+                // Try to play from cache first
+                if (guitarSamples[noteName]) {
+                    try {
+                        const source = audioContext.createBufferSource();
+                        source.buffer = guitarSamples[noteName];
+                        
+                        const gainNode = audioContext.createGain();
+                        gainNode.gain.setValueAtTime(0.6, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration * 0.7);
+                        
+                        source.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        source.start(now);
+                        source.stop(now + Math.min(source.buffer.duration, duration));
+                        return;
+                    } catch (e) {
+                        console.warn('Error playing guitar sample:', e);
+                    }
+                } else {
+                    // Load the sample and play it
+                    loadGuitarSample(noteName).then(buffer => {
+                        if (buffer) {
+                            try {
+                                const source = audioContext.createBufferSource();
+                                source.buffer = buffer;
+                                
+                                const gainNode = audioContext.createGain();
+                                gainNode.gain.setValueAtTime(0.6, now);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration * 0.7);
+                                
+                                source.connect(gainNode);
+                                gainNode.connect(audioContext.destination);
+                                
+                                source.start(now);
+                                source.stop(now + Math.min(buffer.duration, duration));
+                            } catch (e) {
+                                console.warn('Error playing loaded guitar sample:', e);
+                            }
+                        }
+                    }).catch(() => {});
+                }
+            }
+
+
+        }
+
+        // ========== TRACK MANAGEMENT (Modified for Drag-and-Drop) ==========
+        function renderTrackList() {
+            const trackList = document.getElementById('trackList');
+            if (!trackList) return;
+            trackList.style.display = 'none';
+        }
+
+        function getPixelsPerSecond() {
+            const input = document.getElementById('secondsWidthInput');
+            const value = input ? parseInt(input.value, 10) : 90;
+            if (!Number.isFinite(value)) return 90;
+            return Math.max(40, Math.min(260, value));
+        }
+
+        function getCellDurationSec() {
+            return 1; // one full second per timeline division
+        }
+
+        function renderSequencer() {
+            const grid = document.getElementById('sequencerGrid');
+            const timeline = document.getElementById('timeline');
+            if (!grid || !timeline) return;
+
+            const pxPerSecond = getPixelsPerSecond();
+
+            timeline.innerHTML = '';
+            for (let i = 0; i < totalBeats; i++) {
+                const totalSeconds = i;
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                const bar = document.createElement('div');
+                bar.className = 'timeline-bar';
+                bar.textContent = `${minutes}:${String(seconds).padStart(2, '0')}`;
+                bar.style.cssText = `width:${pxPerSecond}px;height:40px;line-height:40px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--border-color);flex-shrink:0;font-size:12px;`;
+                timeline.appendChild(bar);
+            }
+
+            const totalWidth = totalBeats * pxPerSecond;
+            const minHeight = Math.max(grid.clientHeight || 320, 320);
+
+            grid.innerHTML = '';
+            grid.style.cssText = `position:relative; min-height:${minHeight}px; height:100%; background: var(--bg-primary); width:100%; overflow-x: auto; overflow-y: hidden;`;
+
+            const surface = document.createElement('div');
+            surface.id = 'dropSurface';
+            surface.style.cssText = `position:absolute;left:0;top:0;width:${totalWidth}px;height:${minHeight}px;background:transparent;`;
+            surface.addEventListener('dragover', dragOver);
+            surface.addEventListener('drop', dropAnywhere);
+            surface.addEventListener('dragleave', dragLeave);
+            grid.appendChild(surface);
+
+            for (let i = 0; i <= totalBeats; i++) {
+                const line = document.createElement('div');
+                line.style.cssText = `position:absolute;left:${i * pxPerSecond}px;top:0;width:1px;height:${minHeight}px;background:rgba(102,126,234,0.16);pointer-events:none;`;
+                grid.appendChild(line);
+            }
+
+            placedNotes.forEach((n) => {
+                const config = instrumentConfigs[n.instrument] || instrumentConfigs.guitar;
+                const el = document.createElement('div');
+                el.className = 'placed-note';
+                el.dataset.noteId = n.id;
+                el.style.cssText = `position:absolute;left:${n.x}px;top:${n.y}px;width:auto;min-width:${n.width || 60}px;max-width:120px;height:${n.height || 18}px;border-radius:3px;background:${config.color};color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;cursor:grab;z-index:3;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 4px;`;
+                el.textContent = `${n.note}`;
+                el.draggable = true;
+                el.addEventListener('dragstart', (e) => {
+                    draggedPlacedNoteId = n.id;
+                    const rect = el.getBoundingClientRect();
+                    dragOffsetX = e.clientX - rect.left;
+                    dragOffsetY = e.clientY - rect.top;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('placedNoteId', String(n.id));
+                    e.dataTransfer.setData('text/plain', String(n.id));
+                    el.style.opacity = '0.5';
+                });
+                el.addEventListener('dragend', () => {
+                    el.style.opacity = '1';
+                    draggedPlacedNoteId = null;
+                });
+                el.addEventListener('dblclick', () => {
+                    placedNotes = placedNotes.filter(note => note.id !== n.id);
+                    renderSequencer();
+                });
+                grid.appendChild(el);
+            });
+
+            let playhead = document.getElementById('playheadLine');
+            if (!playhead) {
+                playhead = document.createElement('div');
+                playhead.id = 'playheadLine';
+                playhead.style.cssText = 'position:absolute;top:0;left:0;width:2px;height:100%;background:#ff3b30;box-shadow:0 0 8px rgba(255,59,48,0.7);z-index:5;pointer-events:auto;display:block;cursor:ew-resize;';
+                grid.appendChild(playhead);
+            }
+
+            const scrollbarInner = document.getElementById('sequencerScrollbarInner');
+            if (scrollbarInner) {
+                scrollbarInner.style.width = `${totalWidth}px`;
+            }
+            
+            makePlayheadDraggable();
+        }
+
+        // ========== DRAG AND DROP HANDLERS ==========
+        function dragBeatStart(e, beat) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('beat', beat);
+            e.target.style.opacity = '0.5';
+        }
+
+        function dragBeatEnd(e) {
+            e.target.style.opacity = '1';
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            const types = e.dataTransfer.types;
+            if (types.includes('beat')) {
+                e.dataTransfer.dropEffect = 'move';
+                e.currentTarget.style.background = 'rgba(102, 126, 234, 0.3)';
+            } else if (types.includes('note') || types.includes('instrument')) {
+                e.currentTarget.style.background = 'rgba(102, 126, 234, 0.3)';
+            }
+        }
+
+        function dragLeave(e) {
+            e.currentTarget.style.background = 'transparent';
+        }
+
+        function dropBeat(e, targetBeat) {
+            // legacy no-op
+            e.preventDefault();
+        }
+
+        function dropAnywhere(e) {
+            e.preventDefault();
+            e.currentTarget.style.background = 'transparent';
+
+            const grid = document.getElementById('sequencerGrid');
+            const gridRect = grid.getBoundingClientRect();
+            const scrollX = grid.scrollLeft;
+            const scrollY = grid.scrollTop;
+
+            const x = Math.max(0, e.clientX - gridRect.left + scrollX - (dragOffsetX || 16));
+            const y = Math.max(0, e.clientY - gridRect.top + scrollY - (dragOffsetY || 10));
+
+            const placedId = e.dataTransfer.getData('placedNoteId');
+            if (placedId) {
+                const id = parseInt(placedId, 10);
+                const target = placedNotes.find(n => n.id === id);
+                if (target) {
+                    target.x = x;
+                    target.y = y;
+                    target.timeMs = Math.round((x / getPixelsPerSecond()) * 1000);
+                }
+                renderSequencer();
+                return;
+            }
+
+            const instrumentData = e.dataTransfer.getData('instrument');
+            const noteData = e.dataTransfer.getData('note');
+            if (!instrumentData || !noteData) return;
+
+            placedNotes.push({
+                id: noteIdCounter++,
+                x,
+                y,
+                timeMs: Math.round((x / getPixelsPerSecond()) * 1000),
+                instrument: instrumentData,
+                note: noteData,
+                width: 34,
+                height: 18,
+                triggeredAtCycle: -1
+            });
+
+            renderSequencer();
+        }
+
+        function makePlayheadDraggable() {
+            const grid = document.getElementById('sequencerGrid');
+            const playhead = document.getElementById('playheadLine');
+            if (!grid || !playhead) return;
+
+            let draggingPlayhead = false;
+
+            const moveToClientX = (clientX) => {
+                const rect = grid.getBoundingClientRect();
+                const x = Math.max(0, clientX - rect.left + grid.scrollLeft);
+                playhead.style.left = `${x}px`;
+                const sec = x / getPixelsPerSecond();
+                playbackStartTime = audioContext.currentTime - sec;
+                pausedElapsedTime = sec;
+                updateTimeDisplay(sec);
+                updateBeatMarker(sec, 1);
+            };
+
+            playhead.addEventListener('pointerdown', (e) => {
+                draggingPlayhead = true;
+                isPlaying = false;
+                isPaused = true;
+                pausedElapsedTime = Math.max(0, parseFloat(playhead.style.left || '0') / getPixelsPerSecond());
+                moveToClientX(e.clientX);
+                e.preventDefault();
+            });
+
+            window.addEventListener('pointermove', (e) => {
+                if (!draggingPlayhead) return;
+                moveToClientX(e.clientX);
+            });
+
+            window.addEventListener('pointerup', () => {
+                draggingPlayhead = false;
+            });
+        }
+
+        function makePlacedNotesAdjustable() {
+            const grid = document.getElementById('sequencerGrid');
+            if (!grid) return;
+
+            let pointerState = null; // { id, offsetX, offsetY }
+
+            const beginDrag = (event, target) => {
+                const id = parseInt(target.dataset.noteId, 10);
+                if (!id) return;
+                const note = placedNotes.find(n => n.id === id);
+                if (!note) return;
+
+                const rect = target.getBoundingClientRect();
+                pointerState = {
+                    id,
+                    offsetX: event.clientX - rect.left,
+                    offsetY: event.clientY - rect.top
+                };
+                target.style.cursor = 'grabbing';
+                event.preventDefault();
+            };
+
+            const moveDrag = (event) => {
+                if (!pointerState) return;
+                const note = placedNotes.find(n => n.id === pointerState.id);
+                if (!note) return;
+
+                const gridRect = grid.getBoundingClientRect();
+                const x = Math.max(0, event.clientX - gridRect.left + grid.scrollLeft - pointerState.offsetX);
+                const y = Math.max(0, event.clientY - gridRect.top + grid.scrollTop - pointerState.offsetY);
+
+                note.x = x;
+                note.y = y;
+                note.timeMs = Math.round((x / getPixelsPerSecond()) * 1000);
+
+                const el = grid.querySelector(`.placed-note[data-note-id="${note.id}"]`);
+                if (el) {
+                    el.style.left = `${note.x}px`;
+                    el.style.top = `${note.y}px`;
+                }
+            };
+
+            const endDrag = () => {
+                if (!pointerState) return;
+                const id = pointerState.id;
+                pointerState = null;
+                const el = grid.querySelector(`.placed-note[data-note-id="${id}"]`);
+                if (el) el.style.cursor = 'grab';
+            };
+
+            grid.addEventListener('pointerdown', (e) => {
+                const target = e.target.closest('.placed-note');
+                if (!target) return;
+                beginDrag(e, target);
+            });
+
+            window.addEventListener('pointermove', moveDrag);
+            window.addEventListener('pointerup', endDrag);
+            window.addEventListener('pointercancel', endDrag);
+        }
+
+        function makeDraggableInstruments() {
+            const instrumentBtns = document.querySelectorAll('.instrument-btn');
+            instrumentBtns.forEach(btn => {
+                btn.addEventListener('click', () => selectInstrument(btn.dataset.instrument));
+            });
+        }
+
+        let selectedInstrument = null;
+
+        function selectInstrument(instrumentName) {
+            const wasSelected = selectedInstrument === instrumentName;
+            
+            // Remove active state from all buttons
+            document.querySelectorAll('.instrument-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Get notes container and header
+            const notesContainer = document.getElementById('notesContainer');
+            const notesHeader = document.getElementById('notesHeader');
+            
+            // Toggle selected instrument
+            if (wasSelected) {
+                selectedInstrument = null;
+                notesContainer.innerHTML = '';
+                notesHeader.innerHTML = '';
+            } else {
+                selectedInstrument = instrumentName;
+                // Mark button as active
+                const btn = document.querySelector(`[data-instrument="${instrumentName}"]`);
+                btn.classList.add('active');
+                
+                // Get the notes for this instrument
+                const config = instrumentConfigs[instrumentName];
+                let notesList;
+                if (config.type === 'drums') {
+                    notesList = config.subTypes;
+                } else if (instrumentName === 'guitar') {
+                    notesList = guitarNotes;
+                } else {
+                    notesList = notes; // piano uses all 88 notes
+                }
+                
+                // Update header with instrument name
+                notesHeader.textContent = config.name;
+                
+                // Populate the notes container
+                populateNotesContainer(notesList, instrumentName);
+            }
+        }
+
+        function populateNotesContainer(notesList, instrumentName) {
+            const notesContainer = document.getElementById('notesContainer');
+            notesContainer.innerHTML = '';
+            
+            notesList.forEach(note => {
+                const noteBtn = document.createElement('button');
+                noteBtn.className = 'note-btn';
+                noteBtn.textContent = note;
+                noteBtn.draggable = true;
+                
+                noteBtn.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.effectAllowed = 'copy';
+                    e.dataTransfer.setData('note', note);
+                    e.dataTransfer.setData('instrument', instrumentName);
+                    noteBtn.style.opacity = '0.7';
+                });
+                
+                noteBtn.addEventListener('dragend', (e) => {
+                    noteBtn.style.opacity = '1';
+                });
+                
+                notesContainer.appendChild(noteBtn);
+            });
+        }
+
+        function removeTrack(trackId, event) {
+            event.stopPropagation();
+            const trackIndex = tracks.findIndex(t => t.id === trackId);
+            if (trackIndex > -1) {
+                tracks.splice(trackIndex, 1);
+                if (selectedTrackId === trackId) {
+                    selectedTrackId = null;
+                }
+                renderTrackList();
+                renderSequencer();
+            }
+        }
+
+        function muteTrack(trackId, event) {
+            event.stopPropagation();
+            const track = tracks.find(t => t.id === trackId);
+            if (track) {
+                track.muted = !track.muted;
+                renderTrackList();
+            }
+        }
+
+
+
+        // ========== RENDERING FUNCTIONS ==========
+        function renderTrackList() {
+            const trackList = document.getElementById('trackList');
+            trackList.innerHTML = tracks.map(track => {
+                const config = instrumentConfigs[track.instrument];
+                const isDrum = config.type === 'drums';
+                const noteCount = track.notes.length;
+                
+                return `
+                    <div class="track-item ${selectedTrackId === track.id ? 'selected' : ''}" onclick="selectTrack('${track.id}')" style="border-left-color: ${config.color};">
+                        <div class="track-name" style="color: ${config.color}; font-weight: 700;">${track.name}</div>
+                        <div class="track-waveform" style="background: ${config.color}20;">
+                            <canvas class="waveform-canvas-${track.id}" style="width: 100%; height: 100%;"></canvas>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">${noteCount} note${noteCount !== 1 ? 's' : ''}</div>
+                        <div class="track-controls">
+                            <button class="track-btn" title="Mute" onclick="muteTrack('${track.id}', event)" style="color: ${config.color};">${track.muted ? '🔇' : '🔊'}</button>
+                            <button class="track-btn track-btn-delete" title="Delete Track" onclick="removeTrack('${track.id}', event)">✕</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ========== PLAYBACK CONTROL ==========
+        let playbackStartTime = 0;
+        let playbackIntervalId = null;
+        let pausedElapsedTime = 0; // Track elapsed time when paused
+
+        function playSequence() {
+            if (isPlaying) return;
+
+            // ensure audio can start after user gesture
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().catch(() => {});
+            }
+
+            if (isPaused) {
+                isPaused = false;
+                isPlaying = true;
+                playbackStartTime = audioContext.currentTime - pausedElapsedTime;
+                // Reset triggered flag for notes ahead of current playhead position
+                placedNotes.forEach(n => {
+                    if (n.timeMs / 1000 > pausedElapsedTime) {
+                        n.triggeredAtCycle = -1;
+                    }
+                });
+            } else {
+                isPlaying = true;
+                isPaused = false;
+                // Get the playhead position and convert to elapsed time
+                const playhead = document.getElementById('playheadLine');
+                const playheadPosition = playhead ? parseFloat(playhead.style.left || 0) : 0;
+                const elapsedTimeFromPlayhead = playheadPosition / getPixelsPerSecond();
+                pausedElapsedTime = elapsedTimeFromPlayhead;
+                playbackStartTime = audioContext.currentTime - elapsedTimeFromPlayhead;
+                placedNotes.forEach(n => n.triggeredAtCycle = -1);
+            }
+
+            const cellDurationSec = getCellDurationSec();
+            const totalDuration = totalBeats * cellDurationSec;
+            const grid = document.getElementById('sequencerGrid');
+            const playhead = document.getElementById('playheadLine');
+
+            if (playbackIntervalId) clearInterval(playbackIntervalId);
+            if (playhead) {
+                playhead.style.display = 'block';
+                playhead.style.left = '0px';
+            }
+
+            const tick = () => {
+                if (!isPlaying) return;
+
+                const elapsedTime = audioContext.currentTime - playbackStartTime;
+                if (elapsedTime >= totalDuration) {
+                    stopPlayback();
+                    return;
+                }
+
+                updateTimeDisplay(elapsedTime);
+                updateBeatMarker(elapsedTime, cellDurationSec);
+
+                const x = Math.max(0, elapsedTime * getPixelsPerSecond());
+                if (playhead) playhead.style.left = `${x}px`;
+
+                placedNotes.forEach((n) => {
+                    if (elapsedTime >= (n.timeMs / 1000) && n.triggeredAtCycle !== 0) {
+                        n.triggeredAtCycle = 0;
+                        const freq = noteFrequencies[n.note] || 440;
+                        playNote(freq, n.instrument, cellDurationSec * 0.8, n.note);
+                    }
+                });
+
+                if (grid && x > grid.scrollLeft + grid.clientWidth - 80) {
+                    grid.scrollLeft = Math.min(x - 120, Math.max(0, totalBeats * getPixelsPerSecond() - grid.clientWidth));
+                }
+            };
+
+            tick();
+            playbackIntervalId = setInterval(tick, 16);
+        }
+
+        function updateTimeDisplay(elapsedTime) {
+            const timeDisplay = document.getElementById('timeDisplay');
+            const minutes = Math.floor(elapsedTime / 60);
+            const seconds = Math.floor(elapsedTime % 60);
+            const milliseconds = Math.floor((elapsedTime % 1) * 1000);
+            const timeStr = `${minutes}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+            if (timeDisplay) timeDisplay.textContent = timeStr;
+        }
+
+        function updateBeatMarker(elapsedTime, beatDuration) {
+            const currentBeat = Math.floor(elapsedTime / beatDuration);
+            const timeline = document.getElementById('timeline');
+            const bars = timeline.querySelectorAll('.timeline-bar');
+            bars.forEach((bar, idx) => {
+                bar.classList.toggle('current-beat', idx === currentBeat);
+            });
+        }
+
+        function stopPlayback() {
+            isPlaying = false;
+            isPaused = false;
+            pausedElapsedTime = 0;
+            if (playbackIntervalId) clearInterval(playbackIntervalId);
+
+            const timeDisplay = document.getElementById('timeDisplay');
+            if (timeDisplay) timeDisplay.textContent = '0:00.000';
+
+            const timeline = document.getElementById('timeline');
+            const bars = timeline.querySelectorAll('.timeline-bar');
+            bars.forEach(bar => bar.classList.remove('current-beat'));
+
+            const playhead = document.getElementById('playheadLine');
+            if (playhead) {
+                playhead.style.left = '0px';
+                playhead.style.display = 'none';
+            }
+            placedNotes.forEach(n => n.triggeredAtCycle = -1);
+        }
+
+        function pausePlayback() {
+            isPlaying = false;
+            isPaused = true;
+            // Save the current elapsed time to resume from the right point
+            pausedElapsedTime = audioContext.currentTime - playbackStartTime;
+            // Don't clear the interval - it will stop updating due to !isPlaying check
+        }
+
+        // ========== SCROLL SYNCHRONIZATION ==========
+        let lastVerticalScrollSource = null;
+        let lastHorizontalScrollSource = null;
+        
+        function syncScrollPosition() {
+            const timeline = document.getElementById('timeline');
+            const sequencerGrid = document.getElementById('sequencerGrid');
+            const trackList = document.getElementById('trackList');
+            const notesContainer = document.getElementById('notesContainer');
+            const sequencerScrollbar = document.getElementById('sequencerScrollbar');
+
+            // Sync horizontal scroll: grid scroll to timeline + bottom scrollbar + notesContainer
+            sequencerGrid.addEventListener('scroll', () => {
+                if (lastHorizontalScrollSource !== 'grid') {
+                    timeline.scrollLeft = sequencerGrid.scrollLeft;
+                    if (notesContainer) notesContainer.scrollLeft = sequencerGrid.scrollLeft;
+                    if (sequencerScrollbar) sequencerScrollbar.scrollLeft = sequencerGrid.scrollLeft;
+                }
+                lastHorizontalScrollSource = 'grid';
+                setTimeout(() => { lastHorizontalScrollSource = null; }, 50);
+            });
+
+            if (sequencerScrollbar) {
+                sequencerScrollbar.addEventListener('scroll', () => {
+                    if (lastHorizontalScrollSource !== 'bar') {
+                        sequencerGrid.scrollLeft = sequencerScrollbar.scrollLeft;
+                        timeline.scrollLeft = sequencerScrollbar.scrollLeft;
+                        if (notesContainer) notesContainer.scrollLeft = sequencerScrollbar.scrollLeft;
+                    }
+                    lastHorizontalScrollSource = 'bar';
+                    setTimeout(() => { lastHorizontalScrollSource = null; }, 50);
+                });
+            }
+            
+            // Sync vertical scroll: track list to sequencer grid (guarded; trackList may be removed)
+            if (trackList) {
+                trackList.addEventListener('scroll', () => {
+                    if (lastVerticalScrollSource !== 'trackList') {
+                        sequencerGrid.scrollTop = trackList.scrollTop;
+                    }
+                    lastVerticalScrollSource = 'trackList';
+                    // Reset vertical source after a short delay
+                    setTimeout(() => { lastVerticalScrollSource = null; }, 50);
+                });
+            }
+            
+            // Also sync if grid is scrolled vertically (back sync)
+            sequencerGrid.addEventListener('scroll', () => {
+                if (trackList && lastVerticalScrollSource !== 'grid') {
+                    trackList.scrollTop = sequencerGrid.scrollTop;
+                }
+                lastVerticalScrollSource = 'grid';
+                // Reset vertical source after a short delay
+                setTimeout(() => { lastVerticalScrollSource = null; }, 50);
+            });
+        }
+
+        // ========== INITIALIZATION ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hide track list panel (not used in beats-based system)
+            // renderTrackList();
+            renderSequencer();
+            makeDraggableInstruments();
+            makePlacedNotesAdjustable();
+            makePlayheadDraggable();
+            
+            // Setup scroll synchronization
+            syncScrollPosition();
+            
+            // Setup buttons
+            const playBtn = document.getElementById('playBtn');
+            const playBtn2 = document.getElementById('playBtn2');
+            const stopBtn = document.getElementById('stopBtn');
+            const stopBtn2 = document.getElementById('stopBtn2');
+            const timeDisplay = document.getElementById('timeDisplay');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const themeLightDarkBtn = document.getElementById('themeLightDark');
+            const searchNavBtn = document.getElementById('searchNavBtn');
+            
+
+            const secondsWidthInput = document.getElementById('secondsWidthInput');
+            if (secondsWidthInput) {
+                const normalizeSecondsWidth = () => {
+                    const value = getPixelsPerSecond();
+                    secondsWidthInput.value = String(value);
+                    renderSequencer();
+                };
+                secondsWidthInput.addEventListener('change', normalizeSecondsWidth);
+                secondsWidthInput.addEventListener('blur', normalizeSecondsWidth);
+                normalizeSecondsWidth();
+            }
+            
+            // Setup play/stop buttons
+            if (playBtn) playBtn.addEventListener('click', playSequence);
+            if (playBtn2) playBtn2.addEventListener('click', playSequence);
+            if (stopBtn) stopBtn.addEventListener('click', stopPlayback);
+            if (stopBtn2) stopBtn2.addEventListener('click', stopPlayback);
+            
+            const pauseBtn2 = document.getElementById('pauseBtn2');
+            if (pauseBtn2) pauseBtn2.addEventListener('click', pausePlayback);
+
+            // Profile
+            const userFirstName = localStorage.getItem('userFirstName') || 'User';
+            const userLastName = localStorage.getItem('userLastName') || 'Profile';
+            const profileName = document.getElementById('profileName');
+            if (profileName) {
+                profileName.textContent = `${userFirstName} ${userLastName}`;
+            }
+            
+            if (!localStorage.getItem('userId')) window.location.href = '../Pages/login.html';
+
+            // Settings & Theme
+            const settingsDropdown = document.getElementById('settingsDropdown');
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    settingsDropdown.classList.toggle('show');
+                });
+            }
+            
+            document.addEventListener('click', (e) => {
+                if (settingsBtn && !settingsBtn.contains(e.target) && settingsDropdown && !settingsDropdown.contains(e.target)) {
+                    settingsDropdown.classList.remove('show');
+                }
+            });
+            
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            if (currentTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            }
+            
+            function updateThemeButtonText() {
+                const isDark = document.body.classList.contains('dark-theme');
+                if (themeLightDarkBtn) {
+                    themeLightDarkBtn.innerHTML = isDark ? '<span>🌙 Light Mode</span>' : '<span>🌙 Dark Mode</span>';
+                }
+            }
+            
+            updateThemeButtonText();
+            
+            if (themeLightDarkBtn) {
+                themeLightDarkBtn.addEventListener('click', () => {
+                    document.body.classList.toggle('dark-theme');
+                    const isDark = document.body.classList.contains('dark-theme');
+                    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    updateThemeButtonText();
+                    if (settingsDropdown) settingsDropdown.classList.remove('show');
+                });
+            }
+
+            // Search Navigation
+            if (searchNavBtn) {
+                searchNavBtn.addEventListener('click', () => {
+                    const accountType = localStorage.getItem('accountType') || 'student';
+                    if (accountType === 'instructor') {
+                        window.location.href = '../Pages/students.html';
+                    } else {
+                        window.location.href = '../Pages/instructors.html';
+                    }
+                });
+            }
+
+            // Bottom Buttons - Save, Load, Exit
+            const saveBeatsBtnLeft = document.getElementById('saveBeatsBtnLeft');
+            const loadBeatsBtnLeft = document.getElementById('loadBeatsBtnLeft');
+            const exitBtnLeft = document.getElementById('exitBtnLeft');
+
+            if (saveBeatsBtnLeft) {
+                saveBeatsBtnLeft.addEventListener('click', () => {
+                    const beatNameInput = document.getElementById('beatNameInput');
+                    beatNameInput.value = '';
+                    document.getElementById('saveBeatModal').style.display = 'flex';
+                    beatNameInput.focus();
+                });
+            }
+
+            if (loadBeatsBtnLeft) {
+                loadBeatsBtnLeft.addEventListener('click', () => {
+                    updateSavedBeatsList();
+                    document.getElementById('loadBeatsModal').style.display = 'flex';
+                });
+            }
+
+            if (exitBtnLeft) {
+                exitBtnLeft.addEventListener('click', () => {
+                    showExitConfirmModal();
+                });
+            }
+
+            // Modal Button Listeners
+            const confirmSaveBtn = document.getElementById('confirmSaveBtn');
+            const cancelSaveBtn = document.getElementById('cancelSaveBtn');
+            const cancelLoadBtn = document.getElementById('cancelLoadBtn');
+            const beatNameInput = document.getElementById('beatNameInput');
+
+            if (confirmSaveBtn) {
+                confirmSaveBtn.addEventListener('click', () => {
+                    const beatName = beatNameInput.value.trim();
+                    if (!beatName) {
+                        alert('Please enter a beat name');
+                        return;
+                    }
+                    
+                    // Get existing beats object
+                    let allBeats = JSON.parse(localStorage.getItem('allSavedBeats') || '{}');
+                    
+                    // Save new beat with timestamp
+                    allBeats[beatName] = {
+                        data: placedNotes,
+                        createdAt: new Date().toLocaleString()
+                    };
+                    
+                    localStorage.setItem('allSavedBeats', JSON.stringify(allBeats));
+                    document.getElementById('saveBeatModal').style.display = 'none';
+                });
+            }
+
+            if (cancelSaveBtn) {
+                cancelSaveBtn.addEventListener('click', () => {
+                    document.getElementById('saveBeatModal').style.display = 'none';
+                });
+            }
+
+            if (cancelLoadBtn) {
+                cancelLoadBtn.addEventListener('click', () => {
+                    document.getElementById('loadBeatsModal').style.display = 'none';
+                });
+            }
+
+            // Close modals when pressing Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.getElementById('saveBeatModal').style.display = 'none';
+                    document.getElementById('loadBeatsModal').style.display = 'none';
+                }
+            });
+
+            // Close modal when clicking outside
+            document.getElementById('saveBeatModal').addEventListener('click', (e) => {
+                if (e.target.id === 'saveBeatModal') {
+                    document.getElementById('saveBeatModal').style.display = 'none';
+                }
+            });
+
+            document.getElementById('loadBeatsModal').addEventListener('click', (e) => {
+                if (e.target.id === 'loadBeatsModal') {
+                    document.getElementById('loadBeatsModal').style.display = 'none';
+                }
+            });
+
+            // Allow Enter key to submit save
+            if (beatNameInput) {
+                beatNameInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        confirmSaveBtn.click();
+                    }
+                });
+            }
+        });
+
+        function updateSavedBeatsList() {
+            const savedBeatsList = document.getElementById('savedBeatsList');
+            const allBeats = JSON.parse(localStorage.getItem('allSavedBeats') || '{}');
+            
+            if (Object.keys(allBeats).length === 0) {
+                savedBeatsList.innerHTML = '<div style="padding: 16px; color: var(--text-secondary); text-align: center;">No saved beats</div>';
+                return;
+            }
+            
+            let html = '';
+            for (const beatName in allBeats) {
+                const beat = allBeats[beatName];
+                const createdDate = beat.createdAt || 'Unknown';
+                html += `
+                    <div style="padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="color: var(--text-primary); font-weight: 600; font-size: 14px;">${beatName}</div>
+                            <div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Created: ${createdDate}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="loadBeatBtn" data-beat-name="${beatName}" style="padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #5568d3 100%); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px;">Load</button>
+                            <button class="deleteBeatBtn" data-beat-name="${beatName}" style="padding: 8px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px;">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            savedBeatsList.innerHTML = html;
+            
+            // Add event listeners to load and delete buttons
+            document.querySelectorAll('.loadBeatBtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const beatName = e.target.getAttribute('data-beat-name');
+                    const allBeats = JSON.parse(localStorage.getItem('allSavedBeats') || '{}');
+                    if (allBeats[beatName]) {
+                        placedNotes = allBeats[beatName].data;
+                        noteIdCounter = Math.max(...placedNotes.map(n => n.id)) + 1 || 1;
+                        renderSequencer();
+                        document.getElementById('loadBeatsModal').style.display = 'none';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.deleteBeatBtn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const beatName = e.target.getAttribute('data-beat-name');
+                    showDeleteConfirmModal(beatName);
+                });
+            });
+        }
+
+        // ========== UI FUNCTIONS ==========
+        function logout() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userFirstName');
+            localStorage.removeItem('userLastName');
+            window.location.href = '../Pages/login.html';
+        }
+
+        function toggleMessagesSidebar() {
+            const sidebar = document.getElementById('messagesSidebar');
+            if (sidebar) sidebar.classList.toggle('collapsed');
+        }
+
+        function closeMessagesSidebar() {
+            const sidebar = document.getElementById('messagesSidebar');
+            if (sidebar) sidebar.classList.add('collapsed');
+        }
+
+        function openFriendConversation(friendId, friendName) {
+            window.location.href = '../Pages/messages.html';
+        }
+
+        function showDeleteConfirmModal(beatName) {
+            document.getElementById('deleteBeatName').textContent = beatName;
+            const modal = document.getElementById('deleteConfirmModal');
+            modal.style.display = 'flex';
+            
+            const confirmBtn = document.getElementById('deleteConfirmOk');
+            const cancelBtn = document.getElementById('deleteConfirmCancel');
+            
+            // Remove old listeners to prevent duplicates
+            confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+            
+            const newConfirmBtn = document.getElementById('deleteConfirmOk');
+            const newCancelBtn = document.getElementById('deleteConfirmCancel');
+            
+            newConfirmBtn.addEventListener('click', () => {
+                const allBeats = JSON.parse(localStorage.getItem('allSavedBeats') || '{}');
+                delete allBeats[beatName];
+                localStorage.setItem('allSavedBeats', JSON.stringify(allBeats));
+                document.getElementById('deleteConfirmModal').style.display = 'none';
+                updateSavedBeatsList();
+            });
+            
+            newCancelBtn.addEventListener('click', () => {
+                document.getElementById('deleteConfirmModal').style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            document.getElementById('deleteConfirmModal').addEventListener('click', (e) => {
+                if (e.target.id === 'deleteConfirmModal') {
+                    document.getElementById('deleteConfirmModal').style.display = 'none';
+                }
+            });
+        }
+
+        function showExitConfirmModal() {
+            const modal = document.getElementById('exitConfirmModal');
+            modal.style.display = 'flex';
+            
+            const confirmBtn = document.getElementById('exitConfirmOk');
+            const cancelBtn = document.getElementById('exitConfirmCancel');
+            
+            // Remove old listeners to prevent duplicates
+            confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+            
+            const newConfirmBtn = document.getElementById('exitConfirmOk');
+            const newCancelBtn = document.getElementById('exitConfirmCancel');
+            
+            newConfirmBtn.addEventListener('click', () => {
+                window.location.href = '../Pages/home.html';
+            });
+            
+            newCancelBtn.addEventListener('click', () => {
+                document.getElementById('exitConfirmModal').style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            document.getElementById('exitConfirmModal').addEventListener('click', (e) => {
+                if (e.target.id === 'exitConfirmModal') {
+                    document.getElementById('exitConfirmModal').style.display = 'none';
+                }
+            });
+        }
+    </script>
+    <script src="../js/api.js"></script>
+</body>
+</html>

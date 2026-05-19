@@ -1,0 +1,594 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiz - JAMMAZING</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/quiz-interface.css">
+    <style>
+        body { overflow-y: auto; }
+        .main-layout { padding: 12px 16px; gap: 14px; }
+        .quiz-box { background: var(--bg-secondary); border-radius: 12px; padding: 14px 18px; }
+        .quiz-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color, #e5e5e5); }
+        .quiz-title-text { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+        .progress-track { background: var(--bg-primary); height: 5px; border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+        .question-counter { font-size: 11px; color: var(--text-secondary); text-align: right; margin-bottom: 8px; }
+        .question-box { background: var(--bg-primary); padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; }
+        .question-box #questionText { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; }
+        .option { padding: 7px 12px; border: 2px solid var(--border-color, #ddd); border-radius: 8px; cursor: pointer; background: var(--bg-secondary); color: var(--text-primary); font-size: 13px; transition: all 0.2s; }
+        .option:hover { border-color: #667eea; background: rgba(102,126,234,0.1); }
+        .option.selected { border-color: #667eea; background: rgba(102,126,234,0.2); font-weight: 600; }
+        #optionsContainer { display: grid; gap: 5px; }
+        #nextBtn { margin-top: 8px; }
+    </style>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>lucide.createIcons());</script>
+<style>
+/* Lucide icon global sizing */
+[data-lucide], i[data-lucide] { display:inline-flex; align-items:center; justify-content:center; }
+.nav-button-icon[data-lucide], i.nav-button-icon { width:20px; height:20px; stroke-width:1.75; }
+.nav-item-bottom-icon[data-lucide], i.nav-item-bottom-icon { width:22px; height:22px; stroke-width:1.75; }
+.settings-btn [data-lucide], .settings-btn i { width:18px; height:18px; }
+.settings-dropdown-item [data-lucide], .settings-dropdown-item i { width:14px; height:14px; vertical-align:middle; }
+button > [data-lucide], button > i { pointer-events:none; }
+</style></head>
+<body>
+    <script>
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+            document.documentElement.style.colorScheme = 'dark';
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+    <!-- Top Navigation -->
+    <nav class="navbar-top">
+        <div class="navbar-top-container">
+            <a href="../Pages/home.html" class="navbar-brand">Jammazing</a>
+            <div class="navbar-search-top">
+                <input type="text" class="search-input" placeholder="Search...">
+                <div style="position: relative;">
+                    <button class="settings-btn" id="settingsBtn" title="Settings"><i data-lucide="settings"></i></button>
+                    <div class="settings-dropdown" id="settingsDropdown">
+                        <button class="settings-dropdown-item" id="themeLightDark">
+                            <span><i data-lucide="moon" style="width:14px;height:14px;"></i> Dark Mode</span>
+                        </button>
+                        <button class="settings-dropdown-item" id="logoutBtn" onclick="logout()">
+                            <span><i data-lucide="log-out" style="width:14px;height:14px;"></i> Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-layout">
+        <!-- Left Sidebar - Profile -->
+        <div class="left-sidebar">
+            <a href="../Pages/profile.html" class="profile-card-line">
+                <div class="profile-avatar-large"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48" fill="none"><circle cx="32" cy="24" r="13" fill="rgba(255,255,255,0.85)"/><ellipse cx="32" cy="54" rx="22" ry="13" fill="rgba(255,255,255,0.85)"/></svg></div>
+                <div class="profile-info-line">
+                    <h3 id="profileName" class="profile-name">Loading...</h3>
+                    <p id="profileRole" class="profile-role">@username</p>
+                </div>
+            </a>
+            <!-- Navigation Buttons -->
+            <div class="navigation-buttons">
+                <a href="../Pages/live-streams.html" class="nav-button">
+                    <i data-lucide="video" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Live Streams</span>
+                </a>
+                <button id="searchNavBtn" class="nav-button">
+                    <i data-lucide="search" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Search People</span>
+                </button>
+                <a href="../Pages/ai-learning.html" class="nav-button active">
+                    <i data-lucide="graduation-cap" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Quizzes</span>
+                </a>
+                <a href="../Pages/ai-jamming.html" class="nav-button">
+                    <i data-lucide="music" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Music Mixer</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Center Feed - Quiz Content -->
+        <div class="center-feed">
+            <div class="post quiz-box">
+                <div class="quiz-header-bar">
+                    <div class="quiz-title-text" id="quizTitle">Quiz</div>
+                    <div style="font-size: 16px; font-weight: bold; color: #667eea;" id="timerDisplay">5:00</div>
+                    <button onclick="quitQuiz()" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px;"><i data-lucide="x" style="width:12px;height:12px;"></i> Quit</button>
+                </div>
+
+                <div class="progress-track">
+                    <div id="progressBar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 100%; width: 25%;"></div>
+                </div>
+                <div class="question-counter" id="questionCounter">Question 1 of 4</div>
+
+                <div class="question-box">
+                    <div id="questionText">Loading question...</div>
+                    <div id="optionsContainer" style="display: grid; gap: 8px;"></div>
+                </div>
+
+                <button id="nextBtn" onclick="nextQuestion()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">Next <i data-lucide="arrow-right" style="width:14px;height:14px;"></i></button>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="right-sidebar">
+            <div class="notifications-card">
+                <h3 class="sidebar-title">Notifications</h3>
+                                <div class="notifications-list" id="sidebarNotifList"><div style="padding:8px;color:var(--text-secondary);font-size:13px;">Loading...</div></div>
+                <a href="../Pages/notifications.html" class="view-all-link">View all notifications</a>
+            </div>
+    <!-- Floating Messages Sidebar -->
+    <div id="messagesSidebar" class="friends-sidebar collapsed" style="cursor: pointer;">
+        <div class="friends-sidebar-header" onclick="toggleMessagesSidebar()" style="cursor: pointer;">
+            <h4>Messages</h4>
+            <button id="closeMessagesSidebar" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);" onclick="event.stopPropagation(); closeMessagesSidebar();"><i data-lucide="x"></i></button>
+        </div>
+        <div class="friends-sidebar-list" id="messagesSidebarList"><div style="padding:12px;color:var(--text-secondary);font-size:13px;">Loading...</div></div>
+    </div>
+
+        <!-- Floating Friends Sidebar -->
+    <div id="friendsSidebar" class="friends-sidebar" style="display: none;">
+        <div class="friends-sidebar-header">
+            <h4 style="margin: 0; color: var(--text-primary);">Friends</h4>
+            <button id="closeFriendsSidebar" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);"><i data-lucide="x"></i></button>
+        </div>
+        <div class="friends-sidebar-list" id="friendsSidebarList"><div style="padding:8px;color:var(--text-secondary);font-size:13px;">Loading...</div></div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+
+    <!-- Quiz Results Modal -->
+    <div id="resultsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; overflow-y: auto;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px; width: 90%; max-width: 480px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center; margin: 24px auto;">
+            <div style="color: var(--text-primary); font-size: 20px; font-weight: 600; margin-bottom: 24px;">Quiz Completed!</div>
+            <div style="width: 160px; height: 160px; margin: 0 auto 24px; position: relative; display: flex; align-items: center; justify-content: center;">
+                <canvas id="scoreChart" width="160" height="160" style="max-width: 100%;"></canvas>
+                <div style="position: absolute; text-align: center;">
+                    <div id="scorePercentage" style="color: var(--text-primary); font-size: 32px; font-weight: 700; line-height: 1;">0%</div>
+                    <div style="color: var(--text-secondary); font-size: 12px; margin-top: 4px;">Score</div>
+                </div>
+            </div>
+            <div id="scoreDetails" style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">0 out of 0 correct</div>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <button id="viewAnswersBtn" style="padding: 10px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">View Answers</button>
+                <button id="backToLearningBtn" style="padding: 10px 24px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Answers Review Modal -->
+    <div id="answersModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3001; align-items: center; justify-content: center; overflow-y: auto;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px; width: 90%; max-width: 600px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); margin: 24px auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div style="color: var(--text-primary); font-size: 18px; font-weight: 600;">Your Answers</div>
+                <button onclick="document.getElementById('answersModal').style.display='none'" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">×</button>
+            </div>
+            <div id="answersReviewList" style="max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;"></div>
+        </div>
+    </div>
+
+    <!-- Quit Confirmation Modal -->
+    <div id="quitConfirmModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px; width: 90%; max-width: 420px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center;">
+            <div style="width: 64px; height: 64px; margin: 0 auto 20px; background: transparent; border: 3px solid #ef4444; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: #ef4444;">⊞</div>
+            <div style="color: var(--text-primary); font-size: 20px; font-weight: 600; margin-bottom: 12px;">Quit Quiz?</div>
+            <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;">Are you sure you want to quit this quiz? Your progress will be lost.</div>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="quitConfirmCancel" style="padding: 10px 24px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Cancel</button>
+                <button id="quitConfirmOk" style="padding: 10px 24px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Quit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversation Modal -->
+    <div id="conversationModal" style="display: none; position: fixed; bottom: 24px; right: 24px; z-index: 2000; width: 340px; height: 480px;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; width: 100%; height: 100%; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.3); overflow: hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:linear-gradient(135deg,#667eea,#764ba2);flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div id="chatAvatar" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+                    <div>
+                        <div id="chatTitle" style="color:white;font-weight:600;font-size:14px;">Chat</div>
+                        <div id="chatUsername" style="color:rgba(255,255,255,0.7);font-size:11px;"></div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;"><button id="chatProfileBtn" style="background:rgba(255,255,255,0.1);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ccc;" title="View Profile"><i data-lucide="user" style="width:14px;height:14px;"></i></button><button onclick="closeConversationModal()" style="background:rgba(255,255,255,0.1);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ccc;"><i data-lucide="x" style="width:14px;height:14px;"></i></button></div>
+            </div>
+            <div id="messagesContainer" class="messages-container" style="flex-grow:1;overflow-y:auto;padding:12px;background:var(--bg-primary);"></div>
+            <div style="padding:10px 12px;border-top:1px solid var(--border-color);display:flex;gap:8px;flex-shrink:0;">
+                <input type="text" id="messageInput" placeholder="Type a message..." style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-primary);outline:none;font-size:13px;" onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;color:white;padding:8px 16px;border-radius:20px;cursor:pointer;font-weight:500;font-size:13px;">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        let currentQuestionIndex = 0;
+        let quizData = null;
+        let selectedAnswers = [];
+        let timeRemaining = 0;
+        let timerInterval = null;
+
+        function setActiveNav(e, page) {
+            document.querySelectorAll('.nav-item-bottom').forEach(el => el.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            localStorage.setItem('currentPage', page);
+        }
+
+        function selectAnswer(element) {
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedAnswers[currentQuestionIndex] = element.textContent;
+        }
+
+        function getUrlParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function startTimer(minutes) {
+            timeRemaining = minutes * 60;
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Time is up! Submitting your quiz...');
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change color to red if less than 1 minute remaining
+            if (timeRemaining < 60) {
+                document.getElementById('timerDisplay').style.color = '#dc3545';
+            }
+        }
+
+        function quitQuiz() {
+            const modal = document.getElementById('quitConfirmModal');
+            modal.style.display = 'flex';
+            
+            const confirmBtn = document.getElementById('quitConfirmOk');
+            const cancelBtn = document.getElementById('quitConfirmCancel');
+            
+            // Remove old listeners to prevent duplicates
+            confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+            
+            const newConfirmBtn = document.getElementById('quitConfirmOk');
+            const newCancelBtn = document.getElementById('quitConfirmCancel');
+            
+            newConfirmBtn.addEventListener('click', () => {
+                clearInterval(timerInterval);
+                window.location.href = '../Pages/ai-learning.html';
+            });
+            
+            newCancelBtn.addEventListener('click', () => {
+                document.getElementById('quitConfirmModal').style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            document.getElementById('quitConfirmModal').addEventListener('click', (e) => {
+                if (e.target.id === 'quitConfirmModal') {
+                    document.getElementById('quitConfirmModal').style.display = 'none';
+                }
+            });
+        }
+
+        async function loadQuiz() {
+            try {
+                const quizId = getUrlParam('quizId');
+                if (!quizId) {
+                    alert('No quiz selected');
+                    window.location.href = '../Pages/ai-learning.html';
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errBody = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errBody}`);
+                }
+
+                quizData = await response.json();
+                
+                // Initialize timer with quiz time limit
+                const timeLimit = quizData.timeLimit || 5;
+                startTimer(timeLimit);
+                
+                displayQuestion();
+            } catch (error) {
+                console.error('Load quiz error:', error);
+                alert('Failed to load quiz: ' + error.message);
+                window.location.href = '../Pages/ai-learning.html';
+            }
+        }
+
+        function displayQuestion() {
+            if (!quizData || !quizData.questions || quizData.questions.length === 0) {
+                alert('No questions in this quiz');
+                window.location.href = '../Pages/ai-learning.html';
+                return;
+            }
+
+            const question = quizData.questions[currentQuestionIndex];
+            
+            document.getElementById('quizTitle').textContent = quizData.title || 'Quiz';
+            document.getElementById('questionText').textContent = question.question || 'Question text not available';
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = (question.options || []).map((option, index) => 
+                `<div class="option" onclick="selectAnswer(this)">${option}</div>`
+            ).join('');
+
+            // Update progress
+            const progress = ((currentQuestionIndex + 1) / quizData.questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('questionCounter').textContent = `Question ${currentQuestionIndex + 1} of ${quizData.questions.length}`;
+
+            // Update button text
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentQuestionIndex === quizData.questions.length - 1) {
+                nextBtn.innerHTML = 'Submit <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>';
+            } else {
+                nextBtn.innerHTML = 'Next <i data-lucide="arrow-right" style="width:14px;height:14px;"></i>';
+            }
+            lucide.createIcons();
+
+            // Restore previous selection if exists
+            if (selectedAnswers[currentQuestionIndex]) {
+                const options = document.querySelectorAll('.option');
+                options.forEach(opt => {
+                    if (opt.textContent === selectedAnswers[currentQuestionIndex]) {
+                        opt.classList.add('selected');
+                    }
+                });
+            }
+        }
+
+        function nextQuestion() {
+            if (!selectedAnswers[currentQuestionIndex]) {
+                const btn = document.getElementById('nextBtn');
+                btn.style.outline = '2px solid #ef4444';
+                btn.title = 'Please select an answer first';
+                const existing = document.getElementById('answerWarning');
+                if (!existing) {
+                    const warn = document.createElement('div');
+                    warn.id = 'answerWarning';
+                    warn.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;font-size:13px;padding:12px 16px;border-radius:8px;z-index:9999;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:90%;word-break:break-word;';
+                    warn.textContent = 'Please select an answer before continuing.';
+                    document.body.appendChild(warn);
+                    setTimeout(() => {
+                        if (warn && warn.parentNode) warn.remove();
+                    }, 4000);
+                }
+                return;
+            }
+            // Clear warning if present
+            const warn = document.getElementById('answerWarning');
+            if (warn) warn.remove();
+            document.getElementById('nextBtn').style.outline = '';
+            if (currentQuestionIndex < quizData.questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            } else {
+                submitQuiz();
+            }
+        }
+
+        async function submitQuiz() {
+            clearInterval(timerInterval);
+            
+            try {
+                let score = 0;
+                let correctAnswers = [];
+                quizData.questions.forEach((question, index) => {
+                    const isCorrect = selectedAnswers[index] === question.answer;
+                    if (isCorrect) {
+                        score++;
+                    }
+                    correctAnswers.push({
+                        questionIndex: index + 1,
+                        question: question.text,
+                        userAnswer: selectedAnswers[index] || 'Not answered',
+                        correctAnswer: question.answer,
+                        isCorrect: isCorrect
+                    });
+                });
+
+                // Calculate percentage
+                const percentage = Math.round((score / quizData.questions.length) * 100);
+
+                // Store results for review
+                window.quizResults = {
+                    score: score,
+                    total: quizData.questions.length,
+                    percentage: percentage,
+                    answers: correctAnswers
+                };
+
+                // Show results modal
+                showResultsModal(score, quizData.questions.length, percentage);
+            } catch (error) {
+                console.error('Submit quiz error:', error);
+                alert('Failed to submit quiz');
+            }
+        }
+
+        function showResultsModal(score, total, percentage) {
+            const modal = document.getElementById('resultsModal');
+            document.getElementById('scorePercentage').textContent = percentage + '%';
+            document.getElementById('scoreDetails').textContent = `${score} out of ${total} correct`;
+            
+            // Draw circular chart
+            const canvas = document.getElementById('scoreChart');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 70;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fill();
+            
+            // Draw score arc
+            const startAngle = -Math.PI / 2;
+            const endAngle = startAngle + (percentage / 100) * 2 * Math.PI;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            modal.style.display = 'flex';
+            
+            // Setup event listeners
+            const viewAnswersBtn = document.getElementById('viewAnswersBtn');
+            const backBtn = document.getElementById('backToLearningBtn');
+            
+            // Remove old listeners
+            viewAnswersBtn.replaceWith(viewAnswersBtn.cloneNode(true));
+            backBtn.replaceWith(backBtn.cloneNode(true));
+            
+            const newViewAnswersBtn = document.getElementById('viewAnswersBtn');
+            const newBackBtn = document.getElementById('backToLearningBtn');
+            
+            newViewAnswersBtn.addEventListener('click', showAnswersReview);
+            newBackBtn.addEventListener('click', () => {
+                window.location.href = '../Pages/ai-learning.html';
+            });
+        }
+
+        function showAnswersReview() {
+            const answersModal = document.getElementById('answersModal');
+            const reviewList = document.getElementById('answersReviewList');
+            
+            if (!window.quizResults) return;
+            
+            reviewList.innerHTML = window.quizResults.answers.map((item, idx) => {
+                const isCorrect = item.isCorrect;
+                const borderColor = isCorrect ? '#28a745' : '#ef4444';
+                const bgColor = isCorrect ? 'rgba(40, 167, 69, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                
+                return `
+                    <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 8px; padding: 16px;">
+                        <div style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                            <span style="color: ${borderColor}; font-weight: bold;">${isCorrect ? '✓' : '✗'}</span>
+                            Question ${item.questionIndex}
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 13px; margin-bottom: 8px;">${item.question}</div>
+                        <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 6px;">
+                            <strong>Your answer:</strong> ${item.userAnswer}
+                        </div>
+                        ${!isCorrect ? `<div style="color: #28a745; font-size: 12px;"><strong>Correct answer:</strong> ${item.correctAnswer}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            answersModal.style.display = 'flex';
+        }
+
+        window.addEventListener('load', () => {
+            if (!localStorage.getItem('userFirstName')) {
+                window.location.href = '../Pages/login.html';
+                return;
+            }
+
+            // Set profile name from localStorage
+            const firstName = localStorage.getItem('userFirstName') || 'User';
+            const lastName = localStorage.getItem('userLastName') || '';
+            const profileName = document.getElementById('profileName');
+            const profileRole = document.getElementById('profileRole');
+            if (profileName) profileName.textContent = `${firstName} ${lastName}`.trim();
+            if (profileRole) profileRole.textContent = `@${firstName.toLowerCase()}${lastName.toLowerCase()}`;
+
+            loadQuiz();
+
+            // Search People button
+            const searchNavBtn = document.getElementById('searchNavBtn');
+            if (searchNavBtn) {
+                searchNavBtn.addEventListener('click', () => {
+                    window.location.href = '../Pages/search.html';
+                });
+            }
+
+            // Settings Dropdown
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsDropdown = document.getElementById('settingsDropdown');
+            const themeLightDarkBtn = document.getElementById('themeLightDark');
+
+            if (settingsBtn) {
+                settingsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    settingsDropdown.classList.toggle('show');
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (settingsBtn && !settingsBtn.contains(e.target) && settingsDropdown && !settingsDropdown.contains(e.target)) {
+                    settingsDropdown.classList.remove('show');
+                }
+            });
+
+            function updateThemeButtonText() {
+                const isDark = document.body.classList.contains('dark-theme');
+                if (themeLightDarkBtn) themeLightDarkBtn.innerHTML = isDark ? '<span><i data-lucide="sun"></i> Light Mode</span>' : '<span><i data-lucide="moon" style="width:14px;height:14px;"></i> Dark Mode</span>';
+            }
+
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            if (currentTheme === 'dark') document.body.classList.add('dark-theme');
+            updateThemeButtonText();
+
+            if (themeLightDarkBtn) {
+                themeLightDarkBtn.addEventListener('click', () => {
+                    document.body.classList.toggle('dark-theme');
+                    const isDark = document.body.classList.contains('dark-theme');
+                    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    updateThemeButtonText();
+                    if (settingsDropdown) settingsDropdown.classList.remove('show');
+                });
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userFirstName');
+            localStorage.removeItem('userLastName');
+            window.location.href = '../Pages/login.html';
+        }
+    </script>
+</body>
+</html>

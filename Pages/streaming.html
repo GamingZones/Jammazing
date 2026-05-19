@@ -1,0 +1,2078 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Stream - JAMMAZING</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75' fill='%23667eea'>♪</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/home.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>lucide.createIcons());</script>
+<style>
+/* Lucide icon global sizing */
+[data-lucide], i[data-lucide] { display:inline-flex; align-items:center; justify-content:center; }
+.nav-button-icon[data-lucide], i.nav-button-icon { width:20px; height:20px; stroke-width:1.75; }
+.nav-item-bottom-icon[data-lucide], i.nav-item-bottom-icon { width:22px; height:22px; stroke-width:1.75; }
+.settings-btn [data-lucide], .settings-btn i { width:18px; height:18px; }
+.settings-dropdown-item [data-lucide], .settings-dropdown-item i { width:14px; height:14px; vertical-align:middle; }
+button > [data-lucide], button > i { pointer-events:none; }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+}
+</style></head>
+<body>
+    <script>
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+            document.documentElement.style.colorScheme = 'dark';
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+    <!-- Top Navigation -->
+    <nav class="navbar-top">
+        <div class="navbar-top-container">
+            <a href="../Pages/home.html" class="navbar-brand">Jammazing</a>
+            <div class="navbar-search-top">
+                <input type="text" class="search-input" placeholder="Search...">
+                <div style="position: relative;">
+                    <button class="settings-btn" id="settingsBtn" title="Settings"><i data-lucide="settings"></i></button>
+                    <div class="settings-dropdown" id="settingsDropdown">
+                        <button class="settings-dropdown-item" id="themeLightDark">
+                            <span><i data-lucide="moon" style="width:14px;height:14px;"></i> Dark Mode</span>
+                        </button>
+                        <button class="settings-dropdown-item" id="logoutBtn" onclick="logout()">
+                            <span><i data-lucide="log-out" style="width:14px;height:14px;"></i> Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-layout">
+        <!-- Left Sidebar - Profile -->
+        <div class="left-sidebar">
+            <a href="../Pages/profile.html" class="profile-card-line">
+                <div class="profile-avatar-large"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48" fill="none"><circle cx="32" cy="24" r="13" fill="rgba(255,255,255,0.85)"/><ellipse cx="32" cy="54" rx="22" ry="13" fill="rgba(255,255,255,0.85)"/></svg></div>
+                <div class="profile-info-line">
+                    <h3 id="profileName" class="profile-name">Loading...</h3>
+                    <p id="profileRole" class="profile-role">@username</p>
+                </div>
+            </a>
+            <!-- Navigation Buttons -->
+            <div class="navigation-buttons">
+                <a href="../Pages/live-streams.html" class="nav-button">
+                    <i data-lucide="video" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Live Streams</span>
+                </a>
+                <button id="searchNavBtn" class="nav-button">
+                    <i data-lucide="search" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Search People</span>
+                </button>
+                <a href="../Pages/ai-learning.html" class="nav-button">
+                    <i data-lucide="graduation-cap" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Quizzes</span>
+                </a>
+                <a href="../Pages/ai-jamming.html" class="nav-button">
+                    <i data-lucide="music" class="nav-button-icon"></i>
+                    <span class="nav-button-text">Music Mixer</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Center Feed - Video Content -->
+        <div class="center-feed">
+            <!-- Participants Video Grid - Main Focus -->
+            <div id="participantsContainer" style="display: none; padding: 16px; border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e5; background: var(--bg-primary);">
+                <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #050505;">🎸 Jamming Session (<span id="participantCount">0</span>/4)</h3>
+                </div>
+                <div id="videoGrid" style="display: grid; gap: 12px; width: 100%; auto-rows: auto;">
+                    <!-- Videos will be added dynamically -->
+                </div>
+                <!-- Stream Info Below Videos -->
+                <div style="padding-top: 12px; margin-top: 12px; border-top: 1px solid #e5e5e5;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div>
+                            <h3 id="jammingStreamTitle" style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: #050505;">Live Stream</h3>
+                            <p id="jammingStreamDescription" style="margin: 0; font-size: 13px; color: #666;"></p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 13px; color: #666;"><span style="color: #050505; font-weight: 600;" id="jammingViewerCount">0</span> viewers</div>
+                            <div style="font-size: 13px; color: #666; margin-top: 4px;"><i data-lucide="clock" style="width:12px;height:12px;display:inline;margin-right:4px;vertical-align:middle;"></i> <span style="color: #050505; font-weight: 600;" id="jammingStreamDuration">00:00</span></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Description and Leave Button Below Info -->
+                <div style="padding: 16px; margin-top: 12px; background: var(--bg-secondary); border-radius: 6px; border: 1px solid var(--border-color);">
+                    <p id="jammingSessionDescription" style="margin: 0 0 12px 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5; background: none; padding: 0; border: none; outline: none;"></p>
+                    <button id="leaveJammingBtn" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; width: 100%;" onclick="leaveJammingSession()"><i data-lucide="log-out" style="width:14px;height:14px;display:inline;margin-right:6px;"></i> Leave Jamming</button>
+                </div>
+            </div>
+
+            <!-- Stream Info Card (when not jamming) -->
+            <div class="post" style="padding: 0; border-radius: 8px; overflow: hidden; border: 1px solid #e5e5e5;" id="streamInfoCard">
+                <div style="background: #000; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative;">
+                    <video id="videoStream" style="width: 100%; height: 100%; object-fit: cover; display: none;" autoplay muted playsinline></video>
+                    <div id="videoPlaceholder" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 48px;"><i data-lucide="video" style="width:64px;height:64px;color:#555;"></i></div>
+                </div>
+                <!-- Stream Info Section Below Video -->
+                <div style="padding: 16px; border-bottom: 1px solid #e5e5e5;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                        <div>
+                            <h3 id="streamTitle" style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #050505;">Live Stream</h3>
+                            <p id="streamDescription" style="margin: 0; font-size: 13px; color: #666;"></p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 13px; color: #666;"><span style="color: #050505; font-weight: 600;" id="viewerCount">0</span> viewers</div>
+                            <div style="font-size: 13px; color: #666; margin-top: 4px;"><i data-lucide="clock" style="width:12px;height:12px;display:inline;margin-right:4px;vertical-align:middle;"></i> <span style="color: #050505; font-weight: 600;" id="streamDuration">00:00</span></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Controls Section - Only for Streamer -->
+                <div id="controlsSection" style="padding: 16px; background: var(--bg-secondary);">
+                    <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #050505;">Live Stream Controls</h3>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button id="startStreamBtn" style="background: #22c55e; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;" onclick="startStream()"><i data-lucide="radio" style="width:13px;height:13px;"></i> Start</button>
+                        <button id="stopStreamBtn" style="background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;" onclick="stopStream()"><i data-lucide="square" style="width:13px;height:13px;"></i> Stop</button>
+                        <button style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; display: none;" id="muteMicBtn" onclick="toggleMuteMic()"><i data-lucide="mic" style="width:13px;height:13px;"></i> Mute Mic</button>
+                        <button style="background: #6b7280; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; display: none;" id="closeCamBtn" onclick="closeCamera()"><i data-lucide="camera-off" style="width:13px;height:13px;"></i> Close Cam</button>
+                    </div>
+                </div>
+                <!-- Join Jamming Section - Only for Viewers -->
+                <div id="joinJammingSection" style="padding: 16px; background: var(--bg-secondary); display: none;">
+                    <h3 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #050505;">Join Jamming Session</h3>
+                    <button id="joinJammingBtn" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; width: 100%;" onclick="requestJoinJamming()"><i data-lucide="music" style="width:14px;height:14px;display:inline;margin-right:6px;"></i> Ask to Join Jamming</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Chat Only -->
+        <div class="right-sidebar">
+            <div class="friends-card">
+                <h3 class="sidebar-title">Live Chat</h3>
+                <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 200px); max-height: 800px;">
+                    <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 12px; background: var(--bg-primary); color: var(--text-primary);">
+                        <div style="margin-bottom: 8px;"><span style="font-weight: 600; color: #667eea;">System:</span> Stream started</div>
+                    </div>
+                    <div style="padding: 8px; display: flex; gap: 6px; background: var(--bg-secondary);">
+                        <input type="text" id="chatInput" placeholder="Message..." style="flex: 1; padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; background: var(--bg-primary); color: var(--text-primary);">
+                        <button onclick="sendChat()" style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;"><i data-lucide="send" style="width:12px;height:12px;"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Messages Sidebar -->
+    <div id="messagesSidebar" class="friends-sidebar" style="cursor: pointer;">
+        <div class="friends-sidebar-header" onclick="toggleMessagesSidebar()" style="cursor: pointer;">
+            <h4>Messages</h4>
+            <button id="closeMessagesSidebar" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);" onclick="event.stopPropagation(); closeMessagesSidebar();"><i data-lucide="x"></i></button>
+        </div>
+        <div class="friends-sidebar-list" id="messagesSidebarList"><div style="padding:12px;color:var(--text-secondary);font-size:13px;">Loading...</div></div>
+    </div>
+
+        <!-- Floating Friends Sidebar -->
+    <div id="friendsSidebar" class="friends-sidebar" style="display: none;">
+        <div class="friends-sidebar-header">
+            <h4 style="margin: 0; color: var(--text-primary);">Friends</h4>
+            <button id="closeFriendsSidebar" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-secondary);"><i data-lucide="x"></i></button>
+        </div>
+        <div class="friends-sidebar-list" id="friendsSidebarList"><div style="padding:8px;color:var(--text-secondary);font-size:13px;">Loading...</div></div>
+    </div>
+
+    <!-- Conversation Modal -->
+    <div id="conversationModal" style="display: none; position: fixed; bottom: 24px; right: 24px; z-index: 2000; width: 340px; height: 480px;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; width: 100%; height: 100%; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.3); overflow: hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:linear-gradient(135deg,#667eea,#764ba2);flex-shrink:0;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div id="chatAvatar" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;"></div>
+                    <div>
+                        <div id="chatTitle" style="color:white;font-weight:600;font-size:14px;">Chat</div>
+                        <div id="chatUsername" style="color:rgba(255,255,255,0.7);font-size:11px;"></div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;"><button id="chatProfileBtn" style="background:rgba(255,255,255,0.1);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ccc;" title="View Profile"><i data-lucide="user" style="width:14px;height:14px;"></i></button><button onclick="closeConversationModal()" style="background:rgba(255,255,255,0.1);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ccc;"><i data-lucide="x" style="width:14px;height:14px;"></i></button></div>
+            </div>
+            <div id="messagesContainer" class="messages-container" style="flex-grow:1;overflow-y:auto;padding:12px;background:var(--bg-primary);"></div>
+            <div style="padding:10px 12px;border-top:1px solid var(--border-color);display:flex;gap:8px;flex-shrink:0;">
+                <input type="text" id="messageInput" placeholder="Type a message..." style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid var(--border-color);background:var(--bg-secondary);color:var(--text-primary);outline:none;font-size:13px;" onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()" style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;color:white;padding:8px 16px;border-radius:20px;cursor:pointer;font-weight:500;font-size:13px;">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join Jamming Request Modal -->
+    <div id="joinRequestModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px; width: 90%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center;">
+            <div style="color: var(--text-primary); font-size: 18px; font-weight: 600; margin-bottom: 12px;" id="joinRequestTitle">Join Request</div>
+            <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;" id="joinRequestMessage">is asking to join your jamming session</div>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="denyJoinBtn" style="padding: 10px 24px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;" onclick="denyJoinRequest()">Deny</button>
+                <button id="acceptJoinBtn" style="padding: 10px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;" onclick="acceptJoinRequest()">Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join Request Status Modal -->
+    <div id="joinStatusModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px; width: 90%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); text-align: center;">
+            <div style="color: var(--text-primary); font-size: 18px; font-weight: 600; margin-bottom: 12px;" id="statusTitle">Request Sent</div>
+            <div style="color: var(--text-secondary); font-size: 14px; margin-bottom: 24px;" id="statusMessage">Waiting for the streamer to accept your join request...</div>
+            <button style="padding: 10px 24px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;" onclick="document.getElementById('joinStatusModal').style.display='none'">Close</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="../js/api.js"></script>
+    <script>
+        // ==================== WEBRTC & SOCKET.IO SETUP ====================
+        let socket = null;
+        let peerConnections = new Map(); // Map to store all peer connections for this stream
+        let localStream = null;
+        let streamTimer = null;
+        let streamSeconds = 0;
+        let mediaStream = null;
+        let mediaRecorder = null;
+        let recordingChunks = [];
+        let micMuted = false;
+        let currentStreamId = null;
+        let isViewerMode = false;
+        let watchedStreamId = null;
+        let chatRefreshInterval = null;
+        let streamInfoRefreshInterval = null;
+        let jammingInfoUpdateInterval = null;
+        
+        // ==================== JAMMING SESSION VARIABLES ====================
+        let jammingParticipants = []; // Array of {userId, username, socketId}
+        let jammingRequests = []; // Array of pending requests {userId, username, socketId}
+        let currentJammingStatus = 'idle'; // 'idle', 'waiting', 'joined'
+        let pendingRequestSocketId = null; // Socket ID of pending join request
+
+        // ==================== WEBRTC SETUP ====================
+        const RTCConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        // Initialize Socket.io connection
+        function initializeSocket() {
+            if (socket && socket.connected) {
+                console.log('🔌 Socket.io already connected');
+                return;
+            }
+            
+            console.log('🔌 Initializing Socket.io connection...');
+            socket = io('http://localhost:3000', {
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                reconnectionAttempts: 5
+            });
+            
+            socket.on('connect', () => {
+                console.log('✅ Socket.io connected:', socket.id);
+            });
+            
+            socket.on('connect_error', (error) => {
+                console.error('❌ Socket.io connection error:', error);
+            });
+            
+            // STREAMER: Receive notification when viewer joins
+            socket.on('viewer-joined', async (data) => {
+                const { viewerId, viewerSocketId, streamId } = data;
+                console.log('🎬 [STREAMER EVENT] viewer-joined triggered:', { viewerId, viewerSocketId, streamId, currentStreamId });
+                console.log('🎬 [STREAMER] Local stream status:', {
+                    exists: !!localStream,
+                    active: localStream?.active,
+                    videoTracks: localStream?.getVideoTracks().length,
+                    audioTracks: localStream?.getAudioTracks().length
+                });
+                
+                // Create a peer connection and send offer to this specific viewer
+                try {
+                    console.log('🎬 [STREAMER] Creating peer connection for viewer:', viewerId);
+                    const peerConnection = new RTCPeerConnection(RTCConfig);
+                    
+                    // Store metadata
+                    peerConnection._viewerId = viewerId;
+                    peerConnection._viewerSocketId = viewerSocketId;
+                    
+                    // Add local stream tracks BEFORE creating offer
+                    if (localStream && localStream.getTracks().length > 0) {
+                        console.log('🎬 [STREAMER] Adding local stream tracks:', localStream.getTracks().length);
+                        localStream.getTracks().forEach((track, idx) => {
+                            console.log(`🎬 [STREAMER] Adding track ${idx}:`, {
+                                kind: track.kind,
+                                enabled: track.enabled,
+                                readyState: track.readyState
+                            });
+                            peerConnection.addTrack(track, localStream);
+                        });
+                        
+                        const senders = peerConnection.getSenders();
+                        console.log('🎬 [STREAMER] Peer connection senders after addTrack:', {
+                            totalSenders: senders.length,
+                            videoSenders: senders.filter(s => s.track?.kind === 'video').length,
+                            audioSenders: senders.filter(s => s.track?.kind === 'audio').length
+                        });
+                    } else {
+                        console.error('❌ [STREAMER] No local stream or empty stream!', {
+                            streamExists: !!localStream,
+                            tracksLength: localStream?.getTracks().length
+                        });
+                    }
+                    
+                    // Handle peer connection state changes
+                    peerConnection.onconnectionstatechange = () => {
+                        console.log(`🎬 [STREAMER] Connection state with viewer ${viewerId}:`, peerConnection.connectionState);
+                    };
+                    
+                    peerConnection.oniceconnectionstatechange = () => {
+                        console.log(`🎬 [STREAMER] ICE connection state with viewer ${viewerId}:`, peerConnection.iceConnectionState);
+                    };
+                    
+                    // Handle ICE candidates
+                    peerConnection.onicecandidate = (event) => {
+                        if (event.candidate && socket) {
+                            console.log('🎬 [STREAMER] Sending ICE candidate to viewer:', viewerId);
+                            socket.emit('ice-candidate', {
+                                streamId: streamId,
+                                candidate: event.candidate,
+                                toSocket: viewerSocketId
+                            });
+                        }
+                    };
+                    
+                    // Create and send offer to this specific viewer
+                    console.log('🎬 [STREAMER] Creating offer for viewer:', viewerId);
+                    const offer = await peerConnection.createOffer({
+                        offerToReceiveAudio: false,
+                        offerToReceiveVideo: false,
+                        iceRestart: false
+                    });
+                    
+                    console.log('🎬 [STREAMER] Offer created:', {
+                        type: offer.type,
+                        sdpLength: offer.sdp?.length,
+                        hasVideo: offer.sdp?.includes('m=video')
+                    });
+                    
+                    await peerConnection.setLocalDescription(offer);
+                    console.log('🎬 [STREAMER] Local description set, signaling state:', peerConnection.signalingState);
+                    
+                    if (socket) {
+                        console.log('🎬 [STREAMER] Sending offer to viewer socket:', viewerSocketId, 'with offer:', {
+                            type: offer.type,
+                            sdpSize: offer.sdp?.length
+                        });
+                        socket.emit('send-offer', {
+                            streamId: streamId,
+                            offer: peerConnection.localDescription,
+                            viewerSocketId: viewerSocketId
+                        });
+                    }
+                    
+                    peerConnections.set(peerConnection, viewerSocketId);
+                    console.log('✅ [STREAMER] Peer connection created and offer sent. Total PCs:', peerConnections.size);
+                } catch (error) {
+                    console.error('❌ [STREAMER] Error creating peer connection for viewer:', error);
+                }
+            });
+            
+            // VIEWER: Receive offer from streamer
+            socket.on('receive-offer', async (data) => {
+                const { offer, offererId, streamId } = data;
+                console.log('📺 [VIEWER EVENT] receive-offer triggered:', { streamId });
+                await handleStreamerOffer(offer, offererId, streamId);
+            });
+            
+            // STREAMER: Receive answer from viewer
+            socket.on('receive-answer', async (data) => {
+                const { answer, streamId, viewerSocketId } = data;
+                console.log('🎬 [STREAMER EVENT] receive-answer from viewer:', viewerSocketId);
+                await handleViewerAnswer(answer, viewerSocketId);
+            });
+            
+            // Exchange ICE candidates
+            socket.on('ice-candidate', (data) => {
+                const { candidate, streamId } = data;
+                if (candidate && peerConnections.size > 0) {
+                    console.log('🔄 [ICE] Received ICE candidate, adding to all peer connections');
+                    peerConnections.forEach((peerId, pc) => {
+                        if (pc && pc.connectionState !== 'closed') {
+                            pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => {
+                                console.warn('⚠️ [ICE] Could not add candidate:', e.message);
+                            });
+                        }
+                    });
+                }
+            });
+
+            // ==================== JAMMING SESSION EVENTS ====================
+            // STREAMER: Receive join request from viewer
+            socket.on('jamming-join-request', async (data) => {
+                const { userId, username, socketId, streamId } = data;
+                console.log('🎸 [STREAMER] Jamming join request from:', username);
+                if (jammingRequests.length < 4) {
+                    jammingRequests.push({ userId, username, socketId });
+                    showJoinRequestModal(username, socketId, userId);
+                } else {
+                    socket.emit('jamming-join-denied', { viewerSocketId: socketId, reason: 'Session is full' });
+                }
+            });
+
+            // VIEWER: Receive join acceptance
+            socket.on('jamming-join-accepted', async (data) => {
+                const { streamerId, streamerUsername } = data;
+                console.log('🎸 [VIEWER] Jamming request accepted by:', streamerUsername);
+                currentJammingStatus = 'joined';
+                document.getElementById('joinStatusModal').style.display = 'none';
+                document.getElementById('joinJammingBtn').textContent = '✓ Jamming';
+                document.getElementById('joinJammingBtn').disabled = true;
+                // Add viewer themselves to jammingParticipants for display
+                const viewerUsername = localStorage.getItem('username') || `${localStorage.getItem('userFirstName') || 'User'} ${localStorage.getItem('userLastName') || 'Profile'}`;
+                jammingParticipants.push({
+                    userId: localStorage.getItem('userId'),
+                    username: viewerUsername,
+                    socketId: socket.id
+                });
+                updateParticipantsDisplay();
+            });
+
+            // VIEWER: Receive join denial
+            socket.on('jamming-join-denied', (data) => {
+                const { reason } = data;
+                console.log('🎸 [VIEWER] Jamming request denied:', reason);
+                currentJammingStatus = 'idle';
+                document.getElementById('joinStatusModal').style.display = 'none';
+                alert('Join request denied: ' + (reason || 'Unknown reason'));
+                document.getElementById('joinJammingBtn').disabled = false;
+            });
+
+            // REAL-TIME UPDATE: Participant left jamming
+            socket.on('jamming-participant-left', (data) => {
+                const { userId, streamId } = data;
+                console.log('🎸 [REALTIME] Participant left jamming:', userId);
+                console.log('🎸 [DEBUG] Current jammingParticipants:', jammingParticipants.length);
+                
+                // Find the participant who left to get their name
+                const leftParticipant = jammingParticipants.find(p => p.userId === userId);
+                const leftUsername = leftParticipant ? leftParticipant.username : 'Someone';
+                
+                // Remove participant from list
+                jammingParticipants = jammingParticipants.filter(p => p.userId !== userId);
+                
+                console.log('🎸 [DEBUG] After filter jammingParticipants:', jammingParticipants.length);
+                
+                // Show notification to streamer that someone left
+                if (!isViewerMode) {
+                    showNotification(`${leftUsername} left the jamming session`, 'info');
+                }
+                
+                // Check if anyone is left in jamming session
+                if (jammingParticipants.length === 0) {
+                    // All participants left, revert to normal stream view
+                    console.log('🎸 [REALTIME] All participants left, reverting to stream view');
+                    document.getElementById('participantsContainer').style.display = 'none';
+                    document.getElementById('streamInfoCard').style.display = 'block';
+                    currentJammingStatus = 'idle';
+                    
+                    if (!isViewerMode) {
+                        showNotification('Jamming session ended', 'info');
+                        // Reset join button for streamer
+                        const joinBtn = document.getElementById('joinJammingBtn');
+                        if (joinBtn) {
+                            joinBtn.textContent = 'Ask to Join Jamming';
+                            joinBtn.disabled = false;
+                        }
+                    }
+                } else {
+                    // Still have participants, update display
+                    updateParticipantsDisplay();
+                }
+            });
+
+            // REAL-TIME UPDATE: Participant joined (broadcast from streamer)
+            socket.on('jamming-participant-joined', (data) => {
+                const { userId, username, socketId } = data;
+                console.log('🎸 [REALTIME] New participant joined:', username);
+                
+                // Only add if not already in list
+                if (!jammingParticipants.find(p => p.userId === userId)) {
+                    jammingParticipants.push({ userId, username, socketId });
+                    
+                    // Show notification to streamer that someone joined
+                    if (!isViewerMode) {
+                        showNotification(`${username} joined the jamming session`, 'success');
+                    }
+                    
+                    updateParticipantsDisplay();
+                }
+            });
+            
+            socket.on('disconnect', () => {
+                console.log('🔌 Socket.io disconnected');
+            });
+        }
+
+        // Create a peer connection and send offer to viewers
+        // Handle streamer receiving viewer answer
+        async function handleStreamerOffer(offer, offererId, streamId) {
+            try {
+                console.log('📺 [VIEWER] Handling streamer offer...');
+                const peerConnection = new RTCPeerConnection(RTCConfig);
+                
+                // Track signaling state changes
+                peerConnection.onsignalingstatechange = () => {
+                    console.log('📺 [VIEWER] Signaling state changed:', peerConnection.signalingState);
+                };
+                
+                // Track ICE connection state
+                peerConnection.oniceconnectionstatechange = () => {
+                    console.log('📺 [VIEWER] ICE connection state changed:', peerConnection.iceConnectionState);
+                };
+                
+                // Handle remote stream (the streamer's video)
+                peerConnection.ontrack = (event) => {
+                    console.log('📺 [VIEWER] ⭐ ontrack EVENT FIRED! ⭐', {
+                        trackKind: event.track.kind, 
+                        trackEnabled: event.track.enabled, 
+                        streamsLength: event.streams?.length,
+                        receiver: event.receiver,
+                        transceiver: event.transceiver
+                    });
+                    
+                    const videoElement = document.getElementById('videoStream');
+                    
+                    // Best practice: use the stream from the event
+                    if (event.streams && event.streams.length > 0) {
+                        console.log('📺 [VIEWER] Using stream from event.streams[0]');
+                        videoElement.srcObject = event.streams[0];
+                    } else {
+                        // Fallback: create a new MediaStream
+                        console.log('📺 [VIEWER] No streams in event, creating new MediaStream');
+                        if (!videoElement.srcObject) {
+                            const remoteStream = new MediaStream();
+                            videoElement.srcObject = remoteStream;
+                        }
+                        if (videoElement.srcObject) {
+                            videoElement.srcObject.addTrack(event.track);
+                        }
+                    }
+                    
+                    console.log('📺 [VIEWER] Video element srcObject set:', !!videoElement.srcObject);
+                    videoElement.style.display = 'block';
+                    document.getElementById('videoPlaceholder').style.display = 'none';
+                    
+                    // Ensure video plays
+                    videoElement.play().catch(e => {
+                        console.warn('⚠️ [VIEWER] Autoplay error:', e.message);
+                    });
+                };
+                
+                // Handle connection state changes
+                peerConnection.onconnectionstatechange = () => {
+                    console.log('📺 [VIEWER] Connection state:', peerConnection.connectionState);
+                };
+                
+                // Handle ICE candidates
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate && socket) {
+                        console.log('📺 [VIEWER] Sending ICE candidate to streamer');
+                        socket.emit('ice-candidate', {
+                            streamId: streamId,
+                            candidate: event.candidate,
+                            toSocket: offererId
+                        });
+                    }
+                };
+                
+                // Set remote description (streamer's offer)
+                console.log('📺 [VIEWER] Setting remote description from offer:', offer.type);
+                await peerConnection.setRemoteDescription(offer);
+                
+                // Create and send answer
+                console.log('📺 [VIEWER] Creating answer...');
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                
+                if (socket) {
+                    console.log('📺 [VIEWER] Sending answer to streamer');
+                    socket.emit('send-answer', {
+                        streamId: streamId,
+                        answer: peerConnection.localDescription,
+                        offererId: offererId
+                    });
+                }
+                
+                peerConnections.set(peerConnection, offererId);
+                console.log('✅ [VIEWER] Peer connection created');
+            } catch (error) {
+                console.error('❌ [VIEWER] Error handling streamer offer:', error);
+            }
+        }
+
+        // Handle streamer receiving viewer answer
+        async function handleViewerAnswer(answer, viewerSocketId) {
+            try {
+                console.log('🎬 [STREAMER] Handling viewer answer from:', viewerSocketId, 'Total PCs:', peerConnections.size);
+                // Find the peer connection for this specific viewer
+                let answerApplied = false;
+                for (const [pc, peerId] of peerConnections.entries()) {
+                    if (peerId === viewerSocketId && pc.signalingState === 'have-local-offer') {
+                        console.log('🎬 [STREAMER] Found peer connection for viewer, setting answer');
+                        await pc.setRemoteDescription(answer);
+                        answerApplied = true;
+                        break;
+                    }
+                }
+                if (answerApplied) {
+                    console.log('✅ [STREAMER] Answer applied successfully for viewer:', viewerSocketId);
+                } else {
+                    console.warn('⚠️ [STREAMER] Could not find peer connection for viewer:', viewerSocketId);
+                }
+            } catch (error) {
+                console.error('❌ [STREAMER] Error handling viewer answer:', error);
+            }
+        }
+
+        // Close all peer connections
+        function closeAllPeerConnections() {
+            peerConnections.forEach((_, pc) => {
+                pc.close();
+            });
+            peerConnections.clear();
+        }
+
+        // Original streaming.html code continues below
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            } else {
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+        }
+
+        // Check if this is viewer mode (watching a stream)
+        function checkViewerMode() {
+            const params = new URLSearchParams(window.location.search);
+            watchedStreamId = params.get('watchStream');
+            
+            if (watchedStreamId) {
+                console.log('🎬 [VIEWER MODE] Detected - watching stream ID:', watchedStreamId);
+                isViewerMode = true;
+                
+                // Show join jamming button for viewers
+                document.getElementById('joinJammingSection').style.display = 'block';
+                document.getElementById('controlsSection').style.display = 'none';
+                
+                // Check if stream is archived first
+                checkIfArchived();
+            } else {
+                console.log('🎬 [STREAMER MODE] - User is broadcasting');
+                isViewerMode = false;
+                
+                // Hide join jamming button for streamers
+                document.getElementById('joinJammingSection').style.display = 'none';
+                document.getElementById('controlsSection').style.display = 'block';
+                
+                // Start real-time chat updates for streamer too
+                loadChatMessages();
+                chatRefreshInterval = setInterval(loadChatMessages, 1500);
+            }
+        }
+
+        // Check if the stream is archived (ended)
+        async function checkIfArchived() {
+            try {
+                const response = await fetch(`http://localhost:3000/api/livestreams/${watchedStreamId}`);
+                if (!response.ok) {
+                    console.error('Stream not found');
+                    document.getElementById('videoPlaceholder').innerHTML = '<span style="color: #999; font-size: 18px;">Stream not found</span>';
+                    return;
+                }
+                
+                const stream = await response.json();
+                console.log('📊 [STREAM INFO] isLive:', stream.isLive, 'hasRecording:', stream.recordingUrl);
+                
+                if (stream.isLive === 1 || stream.isLive === true) {
+                    // Live stream - use WebRTC viewer mode
+                    console.log('📺 [VIEWER MODE] Stream is LIVE - connecting via WebRTC...');
+                    connectAsLiveViewer();
+                } else {
+                    // Archived stream - show playback interface
+                    console.log('🎞️ [PLAYBACK MODE] Stream is archived - showing playback interface...');
+                    showArchivedStreamPlayback(stream);
+                }
+            } catch (error) {
+                console.error('Error checking stream status:', error);
+                document.getElementById('videoPlaceholder').innerHTML = '<span style="color: #999; font-size: 18px;">Error loading stream</span>';
+            }
+        }
+
+        // Show archived stream playback interface
+        async function showArchivedStreamPlayback(stream) {
+            // Hide controls
+            document.getElementById('startStreamBtn').style.display = 'none';
+            document.getElementById('stopStreamBtn').style.display = 'none';
+            document.getElementById('muteMicBtn').style.display = 'none';
+            document.getElementById('closeCamBtn').style.display = 'none';
+            document.getElementById('controlsSection').style.display = 'none';
+            
+            // Hide viewer count and timer for archived streams
+            const viewerCountEl = document.getElementById('viewerCount');
+            const streamDurationEl = document.getElementById('streamDuration');
+            if (viewerCountEl) {
+                // viewerCount -> parent div (viewers) -> parent div (right-align container)
+                viewerCountEl.parentElement.style.display = 'none';
+            }
+            if (streamDurationEl) {
+                // streamDuration -> parent span -> parent div (duration container) -> parent div (right-align container)
+                streamDurationEl.parentElement.parentElement.style.display = 'none';
+            }
+            
+            // Update stream info
+            document.getElementById('streamTitle').textContent = stream.title || 'Archived Stream';
+            document.getElementById('streamDescription').textContent = stream.description || 'This stream has ended';
+            
+            // Use duration from API response if available, otherwise calculate
+            let durationSeconds = stream.streamDuration || 0;
+            if (!durationSeconds && stream.actualStartTime && stream.endTime) {
+                const startTime = new Date(stream.actualStartTime);
+                const endTime = new Date(stream.endTime);
+                durationSeconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
+            }
+            
+            document.getElementById('streamDuration').textContent = formatTime(durationSeconds);
+            
+            console.log(`🎞️ [PLAYBACK] Showing archived stream: title=${stream.title}, duration=${durationSeconds}s`);
+            
+            // Try to load recording
+            try {
+                console.log(`🎞️ [PLAYBACK] Fetching recording for stream ${watchedStreamId}...`);
+                const recordingResponse = await fetch(`http://localhost:3000/api/livestreams/${watchedStreamId}/recording`);
+                
+                if (recordingResponse.ok) {
+                    console.log(`🎞️ [PLAYBACK] Recording found, creating blob...`);
+                    const recordingBlob = await recordingResponse.blob();
+                    const recordingUrl = URL.createObjectURL(recordingBlob);
+                    
+                    // Set up video player
+                    const videoElement = document.getElementById('videoStream');
+                    videoElement.src = recordingUrl;
+                    videoElement.style.display = 'block';
+                    videoElement.controls = true;
+                    
+                    // Hide placeholder
+                    const videoPlaceholder = document.getElementById('videoPlaceholder');
+                    videoPlaceholder.style.display = 'none';
+                    
+                    console.log(`✅ [PLAYBACK] Video loaded successfully`);
+                } else {
+                    console.warn(`⚠️ [PLAYBACK] No recording found (status: ${recordingResponse.status})`);
+                    showPlaybackPlaceholder(stream, durationSeconds);
+                }
+            } catch (error) {
+                console.error('Error loading recording:', error);
+                showPlaybackPlaceholder(stream, durationSeconds);
+            }
+            
+            // Load and setup chat replay synchronized with video playback
+            await setupChatReplay(stream);
+        }
+
+        // Show placeholder when recording is not available
+        function showPlaybackPlaceholder(stream, durationSeconds) {
+            const videoPlaceholder = document.getElementById('videoPlaceholder');
+            videoPlaceholder.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 64px; margin-bottom: 16px; opacity: 0.8;"><i data-lucide="play-circle" style="width:80px;height:80px;"></i></div>
+                    <h3 style="color: #fff; margin: 0 0 8px 0; font-size: 18px;">${stream.title || 'Archived Stream'}</h3>
+                    <p style="color: #aaa; margin: 0 0 16px 0; font-size: 14px;">Stream ended at ${new Date(stream.endTime).toLocaleString()}</p>
+                    <p style="color: #999; margin: 0; font-size: 13px;">⏱️ Duration: ${formatTime(durationSeconds)}</p>
+                    <p style="color: #999; margin: 4px 0 0 0; font-size: 13px;">📊 Peak viewers: ${stream.viewerCount || 0}</p>
+                    <p style="color: #999; margin: 20px 0 0 0; font-size: 12px;">Recording is being processed...</p>
+                </div>
+            `;
+            videoPlaceholder.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        // Setup chat replay synchronized with video playback (like Twitch/YouTube)
+        async function setupChatReplay(stream) {
+            const chatMessages = document.getElementById('chatMessages');
+            const videoElement = document.getElementById('videoStream');
+            let allMessages = [];
+            let streamStartTime = new Date(stream.actualStartTime).getTime();
+            let displayedMessageIds = new Set();
+            let replayStarted = false;
+            let lastDisplayedTime = -1;
+            
+            try {
+                // Fetch all chat messages for this stream
+                const response = await fetch(`http://localhost:3000/api/livestreams/${watchedStreamId}/chat`);
+                if (!response.ok) return;
+                
+                allMessages = await response.json();
+                console.log(`📝 [CHAT REPLAY] Loaded ${allMessages.length} messages for replay`);
+                
+                // Clear initial messages and prepare for replay
+                chatMessages.innerHTML = '<div style="margin-bottom: 8px;"><span style="font-weight: 600; color: #667eea;">System:</span> Stream started</div>';
+                
+                // Process messages: use videoOffset if set, otherwise calculate from createdAt
+                allMessages = allMessages.map(msg => {
+                    let offsetSeconds = msg.videoOffset || 0;
+                    
+                    // If videoOffset is 0 or not set, calculate from createdAt
+                    if (!msg.videoOffset && msg.createdAt) {
+                        const msgTime = new Date(msg.createdAt).getTime();
+                        offsetSeconds = Math.max(0, (msgTime - streamStartTime) / 1000);
+                    }
+                    
+                    return {
+                        ...msg,
+                        videoOffset: offsetSeconds
+                    };
+                });
+                
+                console.log(`📝 [CHAT REPLAY] Message timeline: ${allMessages.map(m => `${m.senderName}@${m.videoOffset.toFixed(1)}s`).join(', ')}`);
+                
+            } catch (error) {
+                console.error('Error loading chat for replay:', error);
+                return;
+            }
+            
+            // Format seconds to MM:SS
+            function formatVideoTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+            
+            // Listen for video time updates
+            const updateChatDisplay = () => {
+                const currentTime = videoElement.currentTime || 0;
+                
+                // Only display messages if we're past time 0 (replay has started)
+                if (currentTime <= 0) {
+                    return;
+                }
+                
+                if (!replayStarted) {
+                    replayStarted = true;
+                    console.log('📝 [CHAT REPLAY] Replay started');
+                }
+                
+                // Find and display messages that should be visible at current playback time
+                allMessages.forEach(msg => {
+                    // Use videoOffset directly
+                    if (!displayedMessageIds.has(msg.id) && msg.videoOffset <= currentTime && msg.videoOffset > lastDisplayedTime) {
+                        // Message should be displayed
+                        const msgDiv = document.createElement('div');
+                        msgDiv.setAttribute('data-msg-id', msg.id);
+                        msgDiv.setAttribute('data-video-time', formatVideoTime(msg.videoOffset));
+                        msgDiv.style.marginBottom = '8px';
+                        msgDiv.style.animation = 'fadeIn 0.3s ease-in';
+                        
+                        // Use video timestamp from videoOffset
+                        const videoTimeStr = formatVideoTime(msg.videoOffset);
+                        
+                        msgDiv.innerHTML = `<span style="font-weight: 600; color: #667eea;">${msg.senderName}:</span> ${msg.message}<span style="color: #999; font-size: 11px; margin-left: 6px;" data-msg-time>${videoTimeStr}</span>`;
+                        chatMessages.appendChild(msgDiv);
+                        displayedMessageIds.add(msg.id);
+                        
+                        console.log(`📝 [CHAT REPLAY] Showing message at ${formatVideoTime(currentTime)}: ${msg.senderName}`);
+                    }
+                });
+                
+                lastDisplayedTime = Math.max(lastDisplayedTime, currentTime);
+                
+                // Auto-scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            };
+            
+            // Handle seeking (user clicks on video timeline or uses arrow keys)
+            const handleSeeking = () => {
+                const currentTime = videoElement.currentTime || 0;
+                console.log(`📝 [CHAT REPLAY] Seeking to ${formatVideoTime(currentTime)}`);
+                
+                // When seeking to 0 or near 0, clear all non-system messages
+                if (currentTime <= 0.1) {
+                    // Remove all user messages
+                    Array.from(displayedMessageIds).forEach(id => {
+                        const msgElement = chatMessages.querySelector(`[data-msg-id="${id}"]`);
+                        if (msgElement) {
+                            msgElement.remove();
+                        }
+                    });
+                    displayedMessageIds.clear();
+                    lastDisplayedTime = -1;
+                } else {
+                    // When seeking forward/backward, clear displayed messages that are after the new position
+                    const messagesToRemove = Array.from(displayedMessageIds).filter(id => {
+                        const msg = allMessages.find(m => m.id === id);
+                        return msg && msg.videoOffset > currentTime;
+                    });
+                    
+                    messagesToRemove.forEach(id => {
+                        const msgElement = chatMessages.querySelector(`[data-msg-id="${id}"]`);
+                        if (msgElement) {
+                            msgElement.remove();
+                            displayedMessageIds.delete(id);
+                        }
+                    });
+                    
+                    // Reset lastDisplayedTime for seeking
+                    lastDisplayedTime = Math.min(lastDisplayedTime, currentTime);
+                }
+            };
+            
+            // Add event listeners
+            videoElement.addEventListener('play', () => {
+                console.log('📝 [CHAT REPLAY] Video playing');
+            });
+            
+            videoElement.addEventListener('timeupdate', updateChatDisplay);
+            videoElement.addEventListener('seeking', handleSeeking);
+            
+            console.log('📝 [CHAT REPLAY] Chat replay system initialized');
+        }
+
+        // Connect as live viewer via WebRTC
+        function connectAsLiveViewer() {
+            // Hide streamer controls and the entire controls section
+            document.getElementById('startStreamBtn').style.display = 'none';
+            document.getElementById('stopStreamBtn').style.display = 'none';
+            document.getElementById('muteMicBtn').style.display = 'none';
+            document.getElementById('closeCamBtn').style.display = 'none';
+            document.getElementById('controlsSection').style.display = 'none';
+            
+            // Initialize Socket.io for WebRTC signaling
+            console.log('📺 [VIEWER MODE] Initializing socket...');
+            initializeSocket();
+            
+            // Join stream with Socket.io as viewer - with retry logic
+            let viewerJoinAttempts = 0;
+            const registerViewer = () => {
+                viewerJoinAttempts++;
+                if (socket && socket.connected) {
+                    const userId = localStorage.getItem('userId');
+                    console.log('📺 [VIEWER MODE] Socket connected, emitting join-stream event:', { streamId: watchedStreamId, userId, role: 'viewer' });
+                    socket.emit('join-stream', {
+                        streamId: watchedStreamId,
+                        userId: userId,
+                        role: 'viewer'
+                    });
+                    console.log('✅ [VIEWER MODE] Socket.io joined as viewer, socket ID:', socket.id);
+                    
+                    // Start stream info updates AFTER socket join
+                    // First call immediately, then every 2 seconds
+                    setTimeout(() => {
+                        loadStreamInfo();
+                        streamInfoRefreshInterval = setInterval(loadStreamInfo, 2000);
+                    }, 100);
+                } else if (viewerJoinAttempts < 10) {
+                    console.warn(`⚠️ [VIEWER MODE] Socket not connected yet (attempt ${viewerJoinAttempts}), retrying in 200ms...`);
+                    setTimeout(registerViewer, 200);
+                } else {
+                    console.error('❌ [VIEWER MODE] Failed to connect and join after 10 attempts');
+                }
+            };
+            registerViewer();
+            
+            // Start real-time chat updates for viewer
+            loadChatMessages();
+            chatRefreshInterval = setInterval(loadChatMessages, 1500);
+        }
+
+        // Initialize streamer mode with real-time stream info
+        function initStreamerMode() {
+            if (isViewerMode) return;
+            
+            // Show stream info and duration for streamer as well
+            if (currentStreamId) {
+                loadStreamInfo();
+                streamInfoRefreshInterval = setInterval(loadStreamInfo, 2000);
+            }
+        }
+
+        // Load stream information in real-time
+        async function loadStreamInfo() {
+            const streamId = isViewerMode ? watchedStreamId : currentStreamId;
+            if (!streamId) return;
+            
+            try {
+                const response = await fetch(`http://localhost:3000/api/livestreams/${streamId}`);
+                if (!response.ok) throw new Error('Stream not found');
+                
+                const stream = await response.json();
+                console.log('📊 [STREAM INFO]', { streamId, isLive: stream.isLive, actualStartTime: stream.actualStartTime, streamDuration: stream.streamDuration, viewerCount: stream.viewerCount });
+                
+                // Update viewer count
+                const viewerCountEl = document.getElementById('viewerCount');
+                if (viewerCountEl) {
+                    viewerCountEl.textContent = stream.viewerCount || 0;
+                }
+                
+                // Update stream title and description
+                const streamTitleEl = document.getElementById('streamTitle');
+                const streamDescEl = document.getElementById('streamDescription');
+                if (streamTitleEl && stream.title) {
+                    streamTitleEl.textContent = stream.title;
+                }
+                if (streamDescEl && stream.description) {
+                    streamDescEl.textContent = stream.description;
+                }
+                
+                // Update duration using server-calculated duration (for viewers) or local timer (for streamer)
+                const streamDurationEl = document.getElementById('streamDuration');
+                if (streamDurationEl && !currentStreamId) {
+                    // Only update duration display for viewers (when not streaming)
+                    if (stream.streamDuration !== undefined && stream.streamDuration >= 0) {
+                        streamDurationEl.textContent = formatTime(stream.streamDuration);
+                    } else if (stream.actualStartTime) {
+                        // Fallback to client-side calculation
+                        const startTime = new Date(stream.actualStartTime);
+                        const now = new Date();
+                        const durationSeconds = Math.floor((now - startTime) / 1000);
+                        streamDurationEl.textContent = formatTime(durationSeconds);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stream info:', error);
+            }
+        }
+
+        // Load chat messages in real-time (for both streamer and viewer)
+        async function loadChatMessages() {
+            const streamId = isViewerMode ? watchedStreamId : currentStreamId;
+            if (!streamId) return;
+            
+            try {
+                const response = await fetch(`http://localhost:3000/api/livestreams/${streamId}/chat`);
+                if (!response.ok) return;
+                
+                const messages = await response.json();
+                const chatMessages = document.getElementById('chatMessages');
+                
+                // Check if we need to update (compare last message)
+                const lastMessage = chatMessages.lastElementChild;
+                const lastMsgData = lastMessage ? lastMessage.getAttribute('data-msg-id') : null;
+                const lastNewMsgData = messages.length > 0 ? messages[messages.length - 1].id : null;
+                
+                if (lastMsgData !== lastNewMsgData) {
+                    // Clear and rebuild
+                    chatMessages.innerHTML = '<div style="margin-bottom: 8px;"><span style="font-weight: 600; color: #667eea;">System:</span> Stream started</div>';
+                    
+                    messages.forEach(msg => {
+                        const msgDiv = document.createElement('div');
+                        msgDiv.setAttribute('data-msg-id', msg.id);
+                        const msgDate = msg.createdAt ? new Date(msg.createdAt) : new Date();
+                        const timestamp = msgDate.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                        msgDiv.setAttribute('data-timestamp', timestamp);
+                        msgDiv.style.marginBottom = '8px';
+                        msgDiv.innerHTML = `<span style="font-weight: 600; color: #667eea;">${msg.senderName}:</span> ${msg.message}<span style="color: #999; font-size: 11px; margin-left: 6px;" data-msg-time>${timestamp}</span>`;
+                        chatMessages.appendChild(msgDiv);
+                    });
+                    
+                    // Auto-scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            } catch (error) {
+                // Silently fail - stream chat might not exist yet
+            }
+        }
+
+        async function startStream() {
+            try {
+                console.log('🎬 [START STREAM] Function called');
+                
+                const constraints = {
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'user'
+                    },
+                    audio: true
+                };
+
+                console.log('🎬 [START STREAM] Requesting camera/mic access...');
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (cameraError) {
+                    console.warn('⚠️ [START STREAM] Camera access denied, using canvas fallback for testing:', cameraError.message);
+                    // Create a mock stream from canvas for testing
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1280;
+                    canvas.height = 720;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Draw initial test pattern
+                    ctx.fillStyle = '#1a1a1a';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#00ff00';
+                    ctx.font = 'bold 48px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🎥 Test Stream', canvas.width / 2, canvas.height / 2 - 100);
+                    ctx.font = '24px Arial';
+                    ctx.fillText('WebRTC Camera Feed (Canvas)', canvas.width / 2, canvas.height / 2);
+                    
+                    // Animate the canvas
+                    let frameCount = 0;
+                    const animateCanvas = () => {
+                        ctx.fillStyle = '#1a1a1a';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#00ff00';
+                        ctx.font = 'bold 48px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('🎥 Test Stream', canvas.width / 2, canvas.height / 2 - 100);
+                        ctx.font = '24px Arial';
+                        ctx.fillText(`Frame: ${frameCount++}`, canvas.width / 2, canvas.height / 2);
+                        ctx.fillText('WebRTC Camera Feed (Canvas)', canvas.width / 2, canvas.height / 2 + 80);
+                    };
+                    
+                    // Get canvas stream
+                    const canvasStream = canvas.captureStream(30);
+                    mediaStream = canvasStream;
+                    
+                    // Start animation
+                    setInterval(animateCanvas, 50);
+                }
+                
+                localStream = mediaStream; // Store for WebRTC
+                console.log('🎬 [START STREAM] Got media stream:', mediaStream.getTracks().length, 'tracks');
+                
+                // Initialize MediaRecorder to record the stream
+                recordingChunks = [];
+                try {
+                    mediaRecorder = new MediaRecorder(mediaStream, {
+                        mimeType: 'video/webm;codecs=vp9'
+                    });
+                } catch (e) {
+                    console.warn('VP9 codec not supported, trying VP8:', e.message);
+                    try {
+                        mediaRecorder = new MediaRecorder(mediaStream, {
+                            mimeType: 'video/webm;codecs=vp8'
+                        });
+                    } catch (e2) {
+                        console.warn('VP8 codec not supported, using default:', e2.message);
+                        mediaRecorder = new MediaRecorder(mediaStream);
+                    }
+                }
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordingChunks.push(event.data);
+                        console.log(`📹 [RECORDING] Chunk collected: ${event.data.size} bytes (total chunks: ${recordingChunks.length})`);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    console.log(`📹 [RECORDING] MediaRecorder stopped event fired`);
+                };
+                
+                mediaRecorder.onerror = (event) => {
+                    console.error(`📹 [RECORDING] MediaRecorder error: ${event.error}`);
+                };
+                
+                mediaRecorder.start();
+                console.log('📹 [RECORDING] MediaRecorder started');
+                
+                // Display video feed locally for streamer
+                const videoElement = document.getElementById('videoStream');
+                videoElement.srcObject = mediaStream;
+                videoElement.style.display = 'block';
+                document.getElementById('videoPlaceholder').style.display = 'none';
+                
+                // Show control buttons
+                document.getElementById('startStreamBtn').style.display = 'none';
+                document.getElementById('muteMicBtn').style.display = 'inline-block';
+                document.getElementById('closeCamBtn').style.display = 'inline-block';
+                
+                micMuted = false;
+                document.getElementById('muteMicBtn').innerHTML = '<i data-lucide="mic" style="width:13px;height:13px;"></i> Mute Mic'; lucide.createIcons();
+                
+                // Send stream start to API
+                const userId = localStorage.getItem('userId');
+                const title = localStorage.getItem('currentStreamTitle') || 'Live Stream';
+                const description = localStorage.getItem('currentStreamDescription') || '';
+                const topic = localStorage.getItem('currentStreamCategory') || 'music';
+                
+                console.log('🎬 [START STREAM] localStorage data:', { userId, title, description, topic });
+                
+                if (!userId) {
+                    console.error('❌ [START STREAM] No userId in localStorage!');
+                    throw new Error('userId not found in localStorage');
+                }
+                
+                try {
+                    console.log('🎬 [START STREAM] Sending API request to start stream...');
+                    const response = await fetch(`http://localhost:3000/api/livestreams/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            streamerId: userId,
+                            title: title,
+                            description: description,
+                            topic: topic
+                        })
+                    });
+                    
+                    console.log('🎬 [START STREAM] API response status:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        currentStreamId = data.streamId;
+                        console.log('✅ [START STREAM] Stream started successfully with ID:', currentStreamId);
+                        
+                        // Initialize Socket.io for WebRTC signaling
+                        console.log('🎬 [START STREAM] Initializing socket...');
+                        initializeSocket();
+                        
+                        // Join stream with Socket.io - with retry logic
+                        let joinAttempts = 0;
+                        const registerStreamer = () => {
+                            joinAttempts++;
+                            if (socket && socket.connected) {
+                                console.log('🎬 [START STREAM] Socket connected, emitting join-stream event as streamer:', { streamId: currentStreamId, userId, role: 'streamer' });
+                                socket.emit('join-stream', {
+                                    streamId: currentStreamId,
+                                    userId: userId,
+                                    role: 'streamer'
+                                });
+                                console.log('✅ [START STREAM] Socket.io joined as streamer, socket ID:', socket.id);
+                            } else if (joinAttempts < 10) {
+                                console.warn(`⚠️ [START STREAM] Socket not connected yet (attempt ${joinAttempts}), retrying in 200ms...`);
+                                setTimeout(registerStreamer, 200);
+                            } else {
+                                console.error('❌ [START STREAM] Failed to connect socket after 10 attempts');
+                            }
+                        };
+                        registerStreamer();
+                        
+                        // Start local duration counter from 0
+                        streamSeconds = 0;
+                        if (streamTimer) clearInterval(streamTimer);
+                        streamTimer = setInterval(() => {
+                            streamSeconds++;
+                            document.getElementById('streamDuration').textContent = formatTime(streamSeconds);
+                        }, 1000);
+                        
+                        // Start real-time stream info updates for streamer
+                        setTimeout(() => {
+                            initStreamerMode();
+                        }, 500);
+                    } else {
+                        const errData = await response.json().catch(() => ({}));
+                        console.error('❌ [START STREAM] Stream start failed:', response.status, errData);
+                    }
+                } catch (apiError) {
+                    console.error('❌ [START STREAM] Stream API error:', apiError);
+                }
+                
+            } catch (error) {
+                console.error('❌ [START STREAM] Error accessing camera/microphone:', error);
+                alert('Unable to access camera or microphone. Please check permissions.\n\nError: ' + error.message);
+            }
+        }
+
+        function toggleMuteMic() {
+            if (mediaStream) {
+                const audioTracks = mediaStream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    micMuted = !micMuted;
+                    audioTracks.forEach(track => track.enabled = !micMuted);
+                    document.getElementById('muteMicBtn').innerHTML = micMuted ? '<i data-lucide="volume-x" style="width:13px;height:13px;"></i> Unmute Mic' : '<i data-lucide="mic" style="width:13px;height:13px;"></i> Mute Mic'; lucide.createIcons();
+                }
+            }
+        }
+
+        function closeCamera() {
+            if (mediaStream) {
+                // Only disable video tracks, don't stop them
+                const videoTracks = mediaStream.getVideoTracks();
+                videoTracks.forEach(track => track.enabled = false);
+                
+                // Hide video and show placeholder
+                const videoElement = document.getElementById('videoStream');
+                videoElement.style.display = 'none';
+                document.getElementById('videoPlaceholder').style.display = 'flex';
+                
+                // Hide Close Cam button
+                document.getElementById('closeCamBtn').style.display = 'none';
+            }
+        }
+
+        function stopStream() {
+            // Show confirmation modal
+            document.getElementById('stopStreamModal').style.display = 'flex';
+        }
+
+        async function confirmStopStream() {
+            document.getElementById('stopStreamModal').style.display = 'none';
+            
+            // Stop recording if active - wait for it to complete
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                console.log('📹 [RECORDING] Stopping MediaRecorder...');
+                
+                // Wait for stop to complete
+                await new Promise((resolve) => {
+                    mediaRecorder.onstop = () => {
+                        console.log('📹 [RECORDING] MediaRecorder stopped, chunks collected:', recordingChunks.length);
+                        resolve();
+                    };
+                    mediaRecorder.stop();
+                });
+            }
+            
+            if (streamTimer) {
+                clearInterval(streamTimer);
+                streamTimer = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+                localStream = null;
+            }
+            
+            // Close all WebRTC peer connections
+            closeAllPeerConnections();
+            
+            // Leave stream via Socket.io
+            if (currentStreamId && socket) {
+                socket.emit('leave-stream', { streamId: currentStreamId });
+            }
+            
+            // Notify server that stream has ended and save to archives
+            if (currentStreamId) {
+                try {
+                    const response = await fetch(`http://localhost:3000/api/livestreams/${currentStreamId}/end`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            duration: streamSeconds,
+                            finalViewerCount: parseInt(document.getElementById('viewerCount').textContent) || 0
+                        })
+                    });
+                    const data = await response.json();
+                    console.log('Stream ended on server:', data);
+                    
+                    // Send recording to server if we have chunks
+                    if (recordingChunks.length > 0) {
+                        console.log(`📹 [RECORDING] Sending ${recordingChunks.length} chunks to server (total size: ${recordingChunks.reduce((a, b) => a + b.size, 0)} bytes)...`);
+                        const recordingBlob = new Blob(recordingChunks, { type: 'video/webm' });
+                        
+                        // Convert blob to base64
+                        const base64Data = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                                const base64 = reader.result.split(',')[1];
+                                console.log(`📹 [RECORDING] Blob converted to base64 (${base64.length} characters)`);
+                                resolve(base64);
+                            };
+                            reader.onerror = reject;
+                            reader.readAsDataURL(recordingBlob);
+                        });
+                        
+                        // Upload recording
+                        try {
+                            console.log(`📹 [RECORDING] Uploading to /api/livestreams/${currentStreamId}/recording...`);
+                            const recordResponse = await fetch(`http://localhost:3000/api/livestreams/${currentStreamId}/recording`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    recordingData: base64Data
+                                })
+                            });
+                            
+                            if (recordResponse.ok) {
+                                const recordData = await recordResponse.json();
+                                console.log('✅ [RECORDING] Recording saved successfully:', recordData);
+                            } else {
+                                const errText = await recordResponse.text();
+                                console.error('❌ [RECORDING] Failed to save recording:', recordResponse.status, errText);
+                            }
+                        } catch (recordError) {
+                            console.error('❌ [RECORDING] Error uploading recording:', recordError);
+                        }
+                    } else {
+                        console.warn('⚠️ [RECORDING] No chunks collected - recording not uploaded');
+                    }
+                } catch (apiError) {
+                    console.error('Error notifying server of stream end:', apiError);
+                }
+                currentStreamId = null;
+            }
+            
+            streamSeconds = 0;
+            document.getElementById('streamDuration').textContent = '00:00';
+            
+            // Hide video and show placeholder
+            const videoElement = document.getElementById('videoStream');
+            videoElement.style.display = 'none';
+            videoElement.srcObject = null;
+            document.getElementById('videoPlaceholder').style.display = 'flex';
+            
+            // Show start button again
+            document.getElementById('startStreamBtn').style.display = 'inline-block';
+            
+            // Hide control buttons
+            document.getElementById('muteMicBtn').style.display = 'none';
+            document.getElementById('closeCamBtn').style.display = 'none';
+            
+            // Clear localStorage
+            localStorage.removeItem('currentStreamTitle');
+            localStorage.removeItem('currentStreamDescription');
+            localStorage.removeItem('currentStreamCategory');
+            localStorage.removeItem('streamStartTime');
+            
+            micMuted = false;
+            
+            // Redirect to archives page after 1 second to show the stopped stream
+            setTimeout(() => {
+                window.location.href = '../Pages/stream-archives.html';
+            }, 1000);
+        }
+
+        function cancelStopStream() {
+            document.getElementById('stopStreamModal').style.display = 'none';
+        }
+
+        // ==================== PARTICIPANT MEDIA CONTROL FUNCTIONS ====================
+        let streamerMicMuted = false;
+        let streamerCamOff = false;
+        let participantMicStates = {};
+        let participantCamStates = {};
+
+        function toggleStreamerMic() {
+            streamerMicMuted = !streamerMicMuted;
+            const btn = event.target.closest('button');
+            if (streamerMicMuted) {
+                btn.style.background = 'rgba(239, 68, 68, 0.7)';
+                btn.innerHTML = '<i data-lucide="mic-off" style="width:14px;height:14px;"></i>';
+            } else {
+                btn.style.background = 'rgba(0, 0, 0, 0.7)';
+                btn.innerHTML = '<i data-lucide="mic" style="width:14px;height:14px;"></i>';
+            }
+            lucide.createIcons();
+            console.log('🎸 Streamer mic:', streamerMicMuted ? 'muted' : 'unmuted');
+        }
+
+        function toggleStreamerCam() {
+            streamerCamOff = !streamerCamOff;
+            const btn = event.target.closest('button');
+            if (streamerCamOff) {
+                btn.style.background = 'rgba(239, 68, 68, 0.7)';
+                btn.innerHTML = '<i data-lucide="camera-off" style="width:14px;height:14px;"></i>';
+            } else {
+                btn.style.background = 'rgba(0, 0, 0, 0.7)';
+                btn.innerHTML = '<i data-lucide="camera" style="width:14px;height:14px;"></i>';
+            }
+            lucide.createIcons();
+            console.log('🎸 Streamer camera:', streamerCamOff ? 'off' : 'on');
+        }
+
+        function toggleParticipantMic(idx) {
+            participantMicStates[idx] = !participantMicStates[idx];
+            const btn = event.target.closest('button');
+            const participant = jammingParticipants[idx];
+            
+            if (participantMicStates[idx]) {
+                btn.style.background = 'rgba(239, 68, 68, 0.7)';
+                btn.innerHTML = '<i data-lucide="mic-off" style="width:14px;height:14px;"></i>';
+            } else {
+                btn.style.background = 'rgba(0, 0, 0, 0.7)';
+                btn.innerHTML = '<i data-lucide="mic" style="width:14px;height:14px;"></i>';
+            }
+            lucide.createIcons();
+            console.log(`🎸 Participant ${participant.username} mic:`, participantMicStates[idx] ? 'muted' : 'unmuted');
+        }
+
+        function toggleParticipantCam(idx) {
+            participantCamStates[idx] = !participantCamStates[idx];
+            const btn = event.target.closest('button');
+            const participant = jammingParticipants[idx];
+            
+            if (participantCamStates[idx]) {
+                btn.style.background = 'rgba(239, 68, 68, 0.7)';
+                btn.innerHTML = '<i data-lucide="camera-off" style="width:14px;height:14px;"></i>';
+            } else {
+                btn.style.background = 'rgba(0, 0, 0, 0.7)';
+                btn.innerHTML = '<i data-lucide="camera" style="width:14px;height:14px;"></i>';
+            }
+            lucide.createIcons();
+            console.log(`🎸 Participant ${participant.username} camera:`, participantCamStates[idx] ? 'off' : 'on');
+        }
+
+        // ==================== JAMMING SESSION FUNCTIONS ====================
+        async function requestJoinJamming() {
+            if (!socket || !socket.connected) {
+                alert('Not connected to server. Please refresh the page.');
+                return;
+            }
+            
+            if (jammingRequests.length >= 4) {
+                alert('The jamming session is full (max 4 people)');
+                return;
+            }
+            
+            currentJammingStatus = 'waiting';
+            pendingRequestSocketId = socket.id;
+            
+            // Get current user info from localStorage
+            let userId = localStorage.getItem('userId') || 'anonymous';
+            let username = localStorage.getItem('username');
+            
+            // If username not in localStorage, fetch from API
+            if (!username && userId !== 'anonymous') {
+                try {
+                    const response = await fetch(`/api/users/${userId}`);
+                    if (response.ok) {
+                        const userData = await response.json();
+                        username = userData.username || (userData.firstName + ' ' + userData.lastName) || 'User';
+                        // Store in localStorage for future use
+                        localStorage.setItem('username', username);
+                    } else {
+                        username = 'User';
+                    }
+                } catch (error) {
+                    console.error('Error fetching user data:', error);
+                    username = 'User';
+                }
+            } else if (!username) {
+                username = 'Anonymous User';
+            }
+            
+            socket.emit('jamming-join-request', {
+                streamId: watchedStreamId,
+                userId: userId,
+                username: username,
+                socketId: socket.id
+            });
+            
+            console.log('🎸 Join request sent for stream:', watchedStreamId, 'as:', username);
+            document.getElementById('joinStatusModal').style.display = 'flex';
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create notification container if it doesn't exist
+            let notifContainer = document.getElementById('notificationContainer');
+            if (!notifContainer) {
+                notifContainer = document.createElement('div');
+                notifContainer.id = 'notificationContainer';
+                notifContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px;';
+                document.body.appendChild(notifContainer);
+            }
+            
+            // Create notification element
+            const notif = document.createElement('div');
+            const bgColor = type === 'info' ? '#667eea' : type === 'success' ? '#48bb78' : '#f56565';
+            notif.style.cssText = `background: ${bgColor}; color: white; padding: 12px 16px; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 250px; font-size: 14px; animation: slideIn 0.3s ease-out;`;
+            notif.textContent = message;
+            
+            notifContainer.appendChild(notif);
+            
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                notif.style.animation = 'slideOut 0.3s ease-out forwards';
+                setTimeout(() => {
+                    notif.remove();
+                    if (notifContainer.children.length === 0) {
+                        notifContainer.remove();
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        function showJoinRequestModal(username, socketId, userId) {
+            document.getElementById('joinRequestTitle').textContent = username;
+            document.getElementById('joinRequestMessage').textContent = 'is asking to join your jamming session';
+            document.getElementById('joinRequestModal').style.display = 'flex';
+            
+            // Store the current request info
+            window.currentJoinRequest = { username, socketId, userId };
+        }
+
+        function acceptJoinRequest() {
+            if (!window.currentJoinRequest) return;
+            
+            const { username, socketId, userId } = window.currentJoinRequest;
+            
+            if (jammingParticipants.length >= 3) { // Streamer + 3 others = 4 max
+                socket.emit('jamming-join-denied', { 
+                    viewerSocketId: socketId, 
+                    reason: 'Session is full' 
+                });
+            } else {
+                socket.emit('jamming-join-accepted', {
+                    viewerSocketId: socketId,
+                    streamerId: localStorage.getItem('userId'),
+                    streamerUsername: localStorage.getItem('username')
+                });
+                
+                jammingParticipants.push({ 
+                    userId: userId || socketId,
+                    username: username || 'Participant', 
+                    socketId: socketId 
+                });
+                
+                // Show notification that participant joined
+                showNotification(`You accepted ${username}'s request`, 'success');
+                
+                // Broadcast to all other participants that someone joined
+                socket.emit('broadcast-jamming-participant-joined', {
+                    streamId: watchedStreamId || currentStreamId,
+                    userId: userId || socketId,
+                    username: username || 'Participant',
+                    socketId: socketId
+                });
+                
+                updateParticipantsDisplay();
+            }
+            
+            // Remove from pending requests
+            jammingRequests = jammingRequests.filter(r => r.socketId !== socketId);
+            document.getElementById('joinRequestModal').style.display = 'none';
+            window.currentJoinRequest = null;
+        }
+
+        function denyJoinRequest() {
+            if (!window.currentJoinRequest) return;
+            
+            const { username, socketId } = window.currentJoinRequest;
+            
+            socket.emit('jamming-join-denied', {
+                viewerSocketId: socketId,
+                reason: 'Request denied'
+            });
+            
+            // Show notification
+            showNotification(`Denied ${username}'s request`, 'info');
+            
+            jammingRequests = jammingRequests.filter(r => r.socketId !== socketId);
+            document.getElementById('joinRequestModal').style.display = 'none';
+            window.currentJoinRequest = null;
+        }
+
+        function leaveJammingSession() {
+            const confirmed = confirm('Are you sure you want to leave the jamming session?');
+            if (confirmed) {
+                // Emit event to notify others
+                const streamId = isViewerMode ? watchedStreamId : currentStreamId;
+                socket.emit('leave-jamming', {
+                    streamId: streamId,
+                    userId: localStorage.getItem('userId')
+                });
+                
+                // Reset jamming state
+                jammingParticipants = [];
+                currentJammingStatus = 'idle';
+                updateParticipantsDisplay();
+                
+                // Show notification to user
+                showNotification('You left the jamming session', 'info');
+                
+                // Reset button state
+                if (!isViewerMode) {
+                    document.getElementById('joinJammingBtn').textContent = 'Ask to Join Jamming';
+                    document.getElementById('joinJammingBtn').disabled = false;
+                }
+                
+                console.log('🎸 Left jamming session');
+            }
+        }
+
+        function updateParticipantsDisplay() {
+            const participantCount = jammingParticipants.length + 1; // +1 for streamer
+            
+            if (participantCount <= 1) {
+                document.getElementById('participantsContainer').style.display = 'none';
+                document.getElementById('streamInfoCard').style.display = 'block';
+                // Stop updating jamming info when not jamming
+                if (jammingInfoUpdateInterval) {
+                    clearInterval(jammingInfoUpdateInterval);
+                    jammingInfoUpdateInterval = null;
+                }
+                return;
+            }
+            
+            // Show participants as main display and hide stream info card
+            document.getElementById('participantsContainer').style.display = 'block';
+            document.getElementById('streamInfoCard').style.display = 'none';
+            document.getElementById('participantCount').textContent = participantCount;
+            
+            // Copy stream info to jamming container
+            updateJammingStreamInfo();
+            
+            // Render participant videos
+            renderParticipantVideos(participantCount);
+            
+            // Start periodic updates of stream info while jamming
+            if (!jammingInfoUpdateInterval) {
+                jammingInfoUpdateInterval = setInterval(updateJammingStreamInfo, 1000);
+            }
+        }
+
+        function updateJammingStreamInfo() {
+            const streamTitle = document.getElementById('streamTitle');
+            const streamDesc = document.getElementById('streamDescription');
+            const viewerCount = document.getElementById('viewerCount');
+            const streamDuration = document.getElementById('streamDuration');
+            
+            const jammingTitle = document.getElementById('jammingStreamTitle');
+            const jammingDesc = document.getElementById('jammingStreamDescription');
+            const jammingSessionDesc = document.getElementById('jammingSessionDescription');
+            const jammingViewerCount = document.getElementById('jammingViewerCount');
+            const jammingDuration = document.getElementById('jammingStreamDuration');
+            
+            if (jammingTitle && streamTitle) jammingTitle.textContent = streamTitle.textContent;
+            if (jammingDesc && streamDesc) jammingDesc.textContent = streamDesc.textContent;
+            if (jammingSessionDesc && streamDesc) jammingSessionDesc.textContent = streamDesc.textContent;
+            if (jammingViewerCount && viewerCount) jammingViewerCount.textContent = viewerCount.textContent;
+            if (jammingDuration && streamDuration) jammingDuration.textContent = streamDuration.textContent;
+        }
+
+        function renderParticipantVideos(totalCount) {
+            const grid = document.getElementById('videoGrid');
+            const isStreamer = !isViewerMode;
+            const currentUserId = localStorage.getItem('userId') || 'anonymous';
+            const streamerInfo = {
+                username: localStorage.getItem('username') || 'Streamer',
+                socketId: 'main',
+                userId: localStorage.getItem('userId')
+            };
+            
+            grid.innerHTML = '';
+            
+            // Set grid layout based on participant count
+            if (totalCount === 2) {
+                grid.style.gridTemplateColumns = '1fr 1fr';
+                grid.style.gridRowGap = '12px';
+            } else if (totalCount === 3) {
+                grid.style.gridTemplateColumns = '1fr 1fr';
+                grid.style.gridRowGap = '12px';
+            } else if (totalCount === 4) {
+                grid.style.gridTemplateColumns = '1fr 1fr';
+                grid.style.gridRowGap = '12px';
+            }
+            
+            // Add streamer video (main)
+            const mainVideoContainer = document.createElement('div');
+            mainVideoContainer.style.cssText = 'background: #000; aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;';
+            mainVideoContainer.innerHTML = `
+                <video id="mainVideoStreamViewer" style="width: 100%; height: 100%; object-fit: cover; display: none;" autoplay muted playsinline></video>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; color: #999;">
+                    <i data-lucide="video" style="width:48px;height:48px;margin-bottom:8px;"></i>
+                    <span style="font-size: 12px;">${streamerInfo.username}</span>
+                </div>
+                <div style="position: absolute; top: 8px; left: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white; padding: 6px 8px; border-radius: 6px;">
+                    <div style="font-size: 11px; color: white; margin: 0;">${streamerInfo.username}</div>
+                </div>
+                ${isStreamer ? `<div style="position: absolute; bottom: 8px; right: 8px; display: flex; gap: 6px;">
+                    <button onclick="toggleStreamerMic()" style="background: rgba(0,0,0,0.7); color: white; border: 1px solid #667eea; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;"><i data-lucide="mic" style="width:14px;height:14px;"></i></button>
+                    <button onclick="toggleStreamerCam()" style="background: rgba(0,0,0,0.7); color: white; border: 1px solid #667eea; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;"><i data-lucide="camera" style="width:14px;height:14px;"></i></button>
+                </div>` : ''}
+            `;
+            grid.appendChild(mainVideoContainer);
+            
+            // Add participant videos - only show controls for the current user
+            jammingParticipants.slice(0, 3).forEach((participant, idx) => {
+                const videoContainer = document.createElement('div');
+                videoContainer.style.cssText = 'background: #000; aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;';
+                const isCurrentUser = !isStreamer && participant.userId === currentUserId;
+                videoContainer.innerHTML = `
+                    <video id="participantVideo_${idx}" style="width: 100%; height: 100%; object-fit: cover; display: none;" autoplay playsinline></video>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; color: #999;">
+                        <i data-lucide="video" style="width:48px;height:48px;margin-bottom:8px;"></i>
+                        <span style="font-size: 12px;">${participant.username}</span>
+                    </div>
+                    <div style="position: absolute; top: 8px; left: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white; padding: 6px 8px; border-radius: 6px;">
+                        <div style="font-size: 11px; color: white; margin: 0;">${participant.username}</div>
+                    </div>
+                    ${isCurrentUser ? `<div style="position: absolute; bottom: 8px; right: 8px; display: flex; gap: 6px;">
+                        <button onclick="toggleParticipantMic(${idx})" style="background: rgba(0,0,0,0.7); color: white; border: 1px solid #667eea; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;"><i data-lucide="mic" style="width:14px;height:14px;"></i></button>
+                        <button onclick="toggleParticipantCam(${idx})" style="background: rgba(0,0,0,0.7); color: white; border: 1px solid #667eea; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;"><i data-lucide="camera" style="width:14px;height:14px;"></i></button>
+                    </div>` : ''}
+                `;
+                grid.appendChild(videoContainer);
+            });
+            
+            lucide.createIcons();
+        }
+
+        window.addEventListener('load', () => {
+            const userFirstName = localStorage.getItem('userFirstName') || 'User';
+            const userLastName = localStorage.getItem('userLastName') || 'Profile';
+            
+            // Ensure profile card is updated
+            const profileName = document.getElementById('profileName');
+            const profileRole = document.getElementById('profileRole');
+            const sidebarProfileName = document.getElementById('sidebarProfileName');
+            const sidebarProfileRole = document.getElementById('sidebarProfileRole');
+            
+            if (profileName) {
+                profileName.textContent = `${userFirstName} ${userLastName}`;
+            }
+            if (profileRole) {
+                profileRole.textContent = `@${userFirstName.toLowerCase()}${userLastName.toLowerCase()}`;
+            }
+            if (sidebarProfileName) {
+                sidebarProfileName.textContent = `${userFirstName} ${userLastName}`;
+            }
+            if (sidebarProfileRole) {
+                sidebarProfileRole.textContent = `@${userFirstName.toLowerCase()}${userLastName.toLowerCase()}`;
+            }
+            if (!localStorage.getItem('userId')) window.location.href = '../Pages/login.html';
+            
+            // Check if this is viewer mode or streamer mode
+            checkViewerMode();
+            
+            // Auto-start stream if coming from go-live page (streamer mode only)
+            if (!isViewerMode) {
+                const streamTitle = localStorage.getItem('currentStreamTitle');
+                console.log('🔍 [PAGE LOAD] currentStreamTitle from localStorage:', streamTitle);
+                
+                if (streamTitle) {
+                    console.log('🎬 [PAGE LOAD] Stream title found, will auto-start in 500ms...');
+                    // Wait a moment for UI to render, then start stream
+                    setTimeout(() => {
+                        console.log('🎬 [AUTO-START] Calling startStream()');
+                        startStream();
+                        // Initialize streamer mode with real-time updates after stream starts
+                        setTimeout(() => {
+                            initStreamerMode();
+                        }, 1000);
+                    }, 500);
+                } else {
+                    console.log('⚠️  [PAGE LOAD] No stream title - user must click Start button manually');
+                }
+            }
+        });
+        
+        // Clean up and end stream when leaving page
+        window.addEventListener('beforeunload', () => {
+            // Clear intervals
+            if (chatRefreshInterval) clearInterval(chatRefreshInterval);
+            if (streamInfoRefreshInterval) clearInterval(streamInfoRefreshInterval);
+            if (streamTimer) clearInterval(streamTimer);
+            
+            // If streamer is closing their tab, end the stream on server
+            if (!isViewerMode && currentStreamId) {
+                console.log('🎬 [CLEANUP] Streamer closing tab - ending stream');
+                // Use sendBeacon for reliable delivery even if page is unloading
+                navigator.sendBeacon(
+                    `http://localhost:3000/api/livestreams/${currentStreamId}/end`,
+                    JSON.stringify({})
+                );
+            }
+        });
+        
+        async function sendChat() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            try {
+                const streamId = isViewerMode ? watchedStreamId : currentStreamId;
+                const userId = localStorage.getItem('userId');
+                const userName = localStorage.getItem('userFirstName') || 'User';
+                
+                if (!streamId) {
+                    console.error('No stream ID available');
+                    return;
+                }
+                
+                // Calculate video offset based on stream time
+                let videoOffset = 0;
+                if (isViewerMode) {
+                    // For viewers watching replay, use video playback time
+                    const videoElement = document.getElementById('videoStream');
+                    videoOffset = videoElement?.currentTime || 0;
+                } else {
+                    // For streamers, use stream elapsed time
+                    videoOffset = streamSeconds || 0;
+                }
+                
+                const response = await fetch(`http://localhost:3000/api/livestreams/${streamId}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        senderId: userId,
+                        senderName: userName,
+                        message: message,
+                        videoOffset: videoOffset
+                    })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    // Refresh chat immediately
+                    await loadChatMessages();
+                } else {
+                    console.error('Failed to send chat message:', response.status);
+                }
+            } catch (error) {
+                console.error('Error sending chat:', error);
+            }
+        }
+        
+        // Friends Sidebar & Messages
+        const searchPeopleBtn = document.getElementById('searchPeopleBtn');
+        const searchNavBtn = document.getElementById('searchNavBtn');
+        const messagesSidebar = document.getElementById('messagesSidebar');
+        const friendsSidebar = document.getElementById('friendsSidebar');
+        const closeFriendsSidebarBtn = document.getElementById('closeFriendsSidebar');
+        
+        // Function to handle search navigation
+        function handleSearchClick() {
+            window.location.href = '../Pages/search.html';
+        }
+        
+        // Search button in navbar navigates to instructors or students based on role
+        if (searchPeopleBtn) {
+            searchPeopleBtn.addEventListener('click', handleSearchClick);
+        }
+        
+        // Search button in navigation section
+        if (searchNavBtn) {
+            searchNavBtn.addEventListener('click', handleSearchClick);
+        }
+        
+        // Toggle messages sidebar between collapsed and expanded
+        function toggleMessagesSidebar() {
+            messagesSidebar.classList.toggle('collapsed');
+        }
+        
+        // Close messages sidebar - collapse it
+        function closeMessagesSidebar() {
+            messagesSidebar.classList.add('collapsed');
+        }
+        
+        // Close friends sidebar
+        if (closeFriendsSidebarBtn) {
+            closeFriendsSidebarBtn.addEventListener('click', () => {
+                friendsSidebar.style.display = 'none';
+            });
+        }
+        
+        function openFriendConversation(friendId, friendName) {
+            window.location.href = '../Pages/messages.html';
+        }
+    </script>
+
+    <!-- Stop Stream Confirmation Modal -->
+    <div id="stopStreamModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; text-align: center; max-width: 360px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);">
+            <div style="width: 60px; height: 60px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                <i data-lucide="square" style="width: 32px; height: 32px; color: #ef4444;"></i>
+            </div>
+            <h3 style="color: var(--text-primary); margin: 0 0 8px 0; font-size: 18px; font-weight: 600;">Stop Streaming?</h3>
+            <p style="color: var(--text-secondary); margin: 0 0 24px 0; font-size: 14px; line-height: 1.5;">Are you sure you want to stop the stream? The stream will be saved to your archives.</p>
+            <div style="display: flex; gap: 12px; align-items: center; justify-content: center;">
+                <button onclick="cancelStopStream()" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='var(--bg-tertiary)'" onmouseout="this.style.background='transparent'">Cancel</button>
+                <button onclick="confirmStopStream()" style="background: #ef4444; border: none; color: white; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">Stop</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+        </div>
+    </div>
+
+    <script>
+
+        // Theme Toggle and Settings
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsDropdown = document.getElementById('settingsDropdown');
+        const themeLightDarkBtn = document.getElementById('themeLightDark');
+        
+        // Toggle dropdown visibility
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsDropdown.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
+                settingsDropdown.classList.remove('show');
+            }
+        });
+        
+        // Update theme button text based on current theme
+        function updateThemeButtonText() {
+            const isDark = document.body.classList.contains('dark-theme');
+            themeLightDarkBtn.innerHTML = isDark ? '<span><i data-lucide="sun"></i> Light Mode</span>' : '<span><i data-lucide="moon" style="width:14px;height:14px;"></i> Dark Mode</span>';
+        }
+        
+        // Theme Toggle
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+        updateThemeButtonText();
+        
+        themeLightDarkBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeButtonText();
+            settingsDropdown.classList.remove('show');
+        });
+        
+        // Logout function
+        function logout() {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userFirstName');
+            localStorage.removeItem('userLastName');
+            window.location.href = '../Pages/login.html';
+        }
+    </script>
+</body>
+</html>

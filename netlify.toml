@@ -1,0 +1,66 @@
+# Netlify Configuration for Jammazing Frontend
+
+[build]
+  # No build step needed - static site
+  command = "echo 'Frontend ready for deployment'"
+  publish = "."
+  
+[dev]
+  # Local development
+  command = "npm run dev-frontend"
+  port = 3001
+  publish = "."
+
+# Redirect all API calls to backend
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api-proxy/:splat"
+  status = 200
+
+# Rewrite for single-page app routes (if needed)
+[[redirects]]
+  from = "/Pages/*"
+  to = "/Pages/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/Pages/home.html"
+  status = 200
+
+# Environment variables (configure in Netlify dashboard)
+[context.production.environment]
+  REACT_APP_API_URL = "https://your-backend-url.onrender.com"
+  REACT_APP_SOCKET_URL = "https://your-backend-url.onrender.com"
+
+[context.deploy-preview.environment]
+  REACT_APP_API_URL = "https://your-backend-staging.onrender.com"
+  REACT_APP_SOCKET_URL = "https://your-backend-staging.onrender.com"
+
+[context.branch-deploy.environment]
+  REACT_APP_API_URL = "http://localhost:3000"
+  REACT_APP_SOCKET_URL = "http://localhost:3000"
+
+# Headers for CORS and caching
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+[[headers]]
+  for = "/Pages/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
