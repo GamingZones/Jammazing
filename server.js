@@ -65,7 +65,12 @@ app.use(express.static(path.join(__dirname)));
 
 // Database Instance
 let db;
-let userModel, quizModel, liveStreamModel, messageModel, backingTrackModel, notificationModel;
+let userModel = null;
+let quizModel = null;
+let liveStreamModel = null;
+let messageModel = null;
+let backingTrackModel = null;
+let notificationModel = null;
 let dbInitialized = false;
 let dbInitPromise = null;
 
@@ -84,41 +89,42 @@ async function initializeApp() {
             const initialized = await db.initialize();
             
             if (!initialized) {
-                console.error('❌ MongoDB initialization failed - running in degraded mode');
-                return;
-            }
-            
-            // Initialize Models
-            userModel = new User(db);
-            quizModel = new Quiz(db);
-            liveStreamModel = new LiveStream(db);
-            messageModel = new Message(db);
-            backingTrackModel = new BackingTrack(db);
-            notificationModel = new Notification(db);
-            
-            dbInitialized = true;
-            console.log('✅ MongoDB Database and models initialized successfully');
-            
-            // Load active streams from database on startup
-            try {
-                const dbStreams = await liveStreamModel.getActiveLiveStreams();
-                for (const stream of dbStreams) {
-                    const user = await userModel.getById(stream.streamerId);
-                    activeStreams.set(stream.streamerId, {
-                        ...stream,
-                        streamerName: user ? `${user.firstName} ${user.lastName}` : 'Unknown',
-                        streamerUsername: user ? user.username : 'unknown',
-                        streamerPicture: user ? user.profilePicture : null
-                    });
-                }
-                console.log(`✅ Loaded ${dbStreams.length} active streams from MongoDB`);
-            } catch (e) {
-                console.warn('⚠️ Could not load active streams:', e.message);
+                console.error('❌ MongoDB initialization failed');
+                // Still create models with non-working db
+                userModel = new User(db);
+                quizModel = new Quiz(db);
+                liveStreamModel = new LiveStream(db);
+                messageModel = new Message(db);
+                backingTrackModel = new BackingTrack(db);
+                notificationModel = new Notification(db);
+                dbInitialized = false;
+            } else {
+                // Initialize Models
+                userModel = new User(db);
+                quizModel = new Quiz(db);
+                liveStreamModel = new LiveStream(db);
+                messageModel = new Message(db);
+                backingTrackModel = new BackingTrack(db);
+                notificationModel = new Notification(db);
+                
+                dbInitialized = true;
+                console.log('✅ MongoDB Database and models initialized successfully');
             }
             
         } catch (error) {
-            console.error('⚠️ Database initialization warning:', error.message);
-            // Don't throw - allow app to continue with limited functionality
+            console.error('⚠️ Database initialization error:', error.message);
+            // Create dummy models so app doesn't crash
+            try {
+                userModel = new User(null);
+                quizModel = new Quiz(null);
+                liveStreamModel = new LiveStream(null);
+                messageModel = new Message(null);
+                backingTrackModel = new BackingTrack(null);
+                notificationModel = new Notification(null);
+            } catch (e) {
+                console.error('Failed to create models:', e.message);
+            }
+            dbInitialized = false;
         }
     })();
     
@@ -149,8 +155,18 @@ app.use(async (req, res, next) => {
     }
     next();
 });
+// Root endpoint
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Pages', 'index.html'));
+    try {
+        res.sendFile(path.join(__dirname, 'Pages', 'index.html'));
+    } catch (err) {
+        res.status(500).json({ error: 'Could not load home page' });
+    }
+});
+
+// Simple health endpoint that requires no async
+app.get('/health', (req, res) => {
+    res.json({ ok: true, time: new Date().toISOString() });
 });
 
 // Favicon route (return empty response to avoid 404)
@@ -160,11 +176,16 @@ app.get('/favicon.ico', (req, res) => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({
-        status: dbInitialized ? 'ready' : 'initializing',
-        database: dbInitialized ? 'connected' : 'connecting',
-        mongodb_uri_set: !!process.env.MONGODB_URI
-    });
+    try {
+        res.json({
+            status: dbInitialized ? 'ready' : 'waiting',
+            database: dbInitialized ? 'connected' : 'connecting',
+            mongodb_uri_set: !!process.env.MONGODB_URI,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ==================== USER ROUTES ====================
@@ -172,8 +193,8 @@ app.get('/api/health', (req, res) => {
 // Register a new user
 app.post('/api/auth/register', async (req, res) => {
     try {
-        if (!userModel) {
-            return res.status(503).json({ error: 'Database not initialized' });
+        if (!dbInitialized || !userModel) {
+            return res.status(503).json({ error: 'Database not ready. Please try again in a moment.' });
         }
         
         const { firstName, lastName, email, username, password, accountType, instrument } = req.body;
@@ -182,41 +203,44 @@ app.post('/api/auth/register', async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
         
-        // Check if user already exists
-        const existingUser = await userModel.getByEmail(email);
-        if (existingUser) {
-            return res.status(409).json({ error: 'Email already registered' });
+        try {
+            const existingUser = await userModel.getByEmail(email);
+            if (existingUser) {
+                return res.status(409).json({ error: 'Email already registered' });
+            }
+        } catch (checkErr) {
+            console.error('Email check failed:', checkErr.message);
+            return res.status(500).json({ error: 'Could not check existing email' });
         }
         
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 12);
-        
-        // Create and save user to MongoDB
-        const result = await userModel.create({
-            firstName,
-            lastName,
-            email,
-            username,
-            password: hashedPassword,
-            accountType,
-            instrument: instrument || ''
-        });
-        
-        res.status(201).json({
-            message: 'User registered successfully',
-            userId: result._id || result.id
-        });
+        try {
+            const hashedPassword = await bcrypt.hash(password, 12);
+            
+            const result = await userModel.create({
+                firstName,
+                lastName,
+                email,
+                username,
+                password: hashedPassword,
+                accountType,
+                instrument: instrument || ''
+            });
+            
+            res.status(201).json({
+                message: 'User registered successfully',
+                userId: result._id || result.id
+            });
+        } catch (createErr) {
+            console.error('User creation failed:', createErr.message);
+            if (createErr.message.includes('already exists')) {
+                return res.status(409).json({ error: createErr.message });
+            }
+            res.status(500).json({ error: 'User creation failed' });
+        }
         
     } catch (error) {
-        console.error('❌ Register error:', error.message);
-        console.error('Stack:', error.stack);
-        
-        // Return user-friendly error message
-        const statusCode = error.message.includes('already exists') ? 409 : 500;
-        res.status(statusCode).json({ 
-            error: error.message || 'Registration failed',
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
+        console.error('Register endpoint error:', error.message);
+        res.status(500).json({ error: 'Registration failed' });
     }
 });
 
@@ -2025,13 +2049,29 @@ app.use((req, res) => {
     }
 });
 
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Start server
 server.listen(PORT, async () => {
-    await initializeApp();
-    console.log(`\n🎵 Jammazing server running on http://localhost:${PORT}`);
-    console.log(`📊 API endpoints ready`);
-    console.log(`✨ Your database is connected and operational\n`);
-    console.log(`🔌 WebSocket signaling server ready on port ${PORT}\n`);
+    try {
+        await initializeApp();
+        console.log(`\n🎵 Jammazing server running on http://localhost:${PORT}`);
+        console.log(`📊 API endpoints ready`);
+        console.log(`✨ Your database is connected and operational\n`);
+        console.log(`🔌 WebSocket signaling server ready on port ${PORT}\n`);
+    } catch (err) {
+        console.error('Failed to start server:', err.message);
+        process.exit(1);
+    }
 });
 
 // Graceful shutdown
