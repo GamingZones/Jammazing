@@ -144,5 +144,6 @@ module.exports = {
     getDownloadUrl,
     findFileByPath,
     getAllConfiguredFiles,
-    loadFileIdMap
+    loadFileIdMap,
+    downloadFile
 };
