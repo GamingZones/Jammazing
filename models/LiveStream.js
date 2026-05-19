@@ -70,10 +70,4 @@ class LiveStream {
 }
 
 module.exports = LiveStream;
-            console.error('Error getting stream stats:', error);
-            return { uniqueViewers: 0, totalViews: 0, avgWatchTimeMinutes: 0 };
-        }
-    }
-}
 
-module.exports = LiveStream;
