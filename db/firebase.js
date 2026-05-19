@@ -28,8 +28,15 @@ async function initializeFirebase() {
         };
 
         // Validate required credentials
+        console.log('🔍 Checking Firebase credentials:');
+        console.log('  PROJECT_ID:', serviceAccount.project_id ? '✅ present' : '❌ MISSING');
+        console.log('  CLIENT_EMAIL:', serviceAccount.client_email ? '✅ present' : '❌ MISSING');
+        console.log('  PRIVATE_KEY:', serviceAccount.private_key ? `✅ present (${serviceAccount.private_key.length} chars)` : '❌ MISSING');
+        console.log('  DATABASE_URL:', process.env.FIREBASE_DATABASE_URL ? '✅ present' : '❌ MISSING');
+        
         if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
             console.error('⚠️ Firebase credentials missing in environment variables');
+            console.error('Required env vars: FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, FIREBASE_DATABASE_URL');
             return false;
         }
 
@@ -45,7 +52,8 @@ async function initializeFirebase() {
         console.log('✅ Firebase initialized successfully');
         return true;
     } catch (error) {
-        console.error('⚠️ Firebase initialization error:', error.message);
+        console.error('❌ Firebase initialization error:', error.message);
+        console.error('Error details:', error.stack);
         return false;
     }
 }
