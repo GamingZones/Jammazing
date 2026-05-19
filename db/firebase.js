@@ -26,23 +26,36 @@ async function initializeFirebase() {
             return true;
         }
 
+        console.log('🔧 Initializing Firebase Admin SDK...');
+        
         // Get Firebase credentials from environment variables
+        const projectId = process.env.FIREBASE_PROJECT_ID;
+        const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+        const databaseUrl = process.env.FIREBASE_DATABASE_URL;
+        
+        console.log('🔍 Environment variables check:');
+        console.log('  FIREBASE_PROJECT_ID:', projectId ? '✅' : '❌ MISSING');
+        console.log('  FIREBASE_CLIENT_EMAIL:', clientEmail ? '✅' : '❌ MISSING');
+        console.log('  FIREBASE_PRIVATE_KEY:', privateKey ? `✅ (${privateKey.length} chars)` : '❌ MISSING');
+        console.log('  FIREBASE_DATABASE_URL:', databaseUrl ? '✅' : '❌ MISSING');
+        
         const serviceAccount = {
             type: 'service_account',
-            project_id: process.env.FIREBASE_PROJECT_ID,
-            private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-            client_email: process.env.FIREBASE_CLIENT_EMAIL,
+            project_id: projectId,
+            private_key: privateKey?.replace(/\\n/g, '\n'),
+            client_email: clientEmail,
             client_id: 'firebase-client-id',
             auth_uri: 'https://accounts.google.com/o/oauth2/auth',
             token_uri: 'https://oauth2.googleapis.com/token'
         };
 
         // Validate required credentials
-        console.log('🔍 Checking Firebase credentials:');
+        console.log('✔️ Checking Firebase credentials:');
         console.log('  PROJECT_ID:', serviceAccount.project_id ? '✅ present' : '❌ MISSING');
         console.log('  CLIENT_EMAIL:', serviceAccount.client_email ? '✅ present' : '❌ MISSING');
         console.log('  PRIVATE_KEY:', serviceAccount.private_key ? `✅ present (${serviceAccount.private_key.length} chars)` : '❌ MISSING');
-        console.log('  DATABASE_URL:', process.env.FIREBASE_DATABASE_URL ? '✅ present' : '❌ MISSING');
+        console.log('  DATABASE_URL:', databaseUrl ? '✅ present' : '❌ MISSING');
         
         if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
             console.error('⚠️ Firebase credentials missing in environment variables');
@@ -50,16 +63,23 @@ async function initializeFirebase() {
             return false;
         }
 
+        if (!databaseUrl) {
+            console.error('⚠️ FIREBASE_DATABASE_URL is missing');
+            return false;
+        }
+
         // Initialize Firebase Admin SDK
+        console.log('🔑 Initializing Firebase app with credentials...');
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            databaseURL: process.env.FIREBASE_DATABASE_URL
+            databaseURL: databaseUrl
         });
 
         db = admin.database();
         auth = admin.auth();
 
         console.log('✅ Firebase initialized successfully');
+        console.log('📊 Database URL:', databaseUrl);
         return true;
     } catch (error) {
         console.error('❌ Firebase initialization error:', error.message);

@@ -127,12 +127,21 @@ async function initializeApp() {
 
 // Middleware to ensure database is initialized before handling requests
 app.use(async (req, res, next) => {
-    // Only initialize on first request, don't block if it fails
-    if (!dbInitialized && !dbInitPromise) {
-        initializeApp().catch(err => {
+    // Wait for database initialization on first request
+    if (!dbInitialized && dbInitPromise) {
+        console.log('⏳ Waiting for database initialization...');
+        try {
+            await dbInitPromise;
+        } catch (err) {
+            console.error('Database initialization error:', err.message);
+        }
+    } else if (!dbInitialized && !dbInitPromise) {
+        console.log('🚀 Starting database initialization...');
+        try {
+            await initializeApp();
+        } catch (err) {
             console.error('Background database initialization failed:', err.message);
-            // Don't return error - let the app continue
-        });
+        }
     }
     next();
 });
