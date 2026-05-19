@@ -16,6 +16,7 @@ const LiveStream = require('./models/LiveStream');
 const Message = require('./models/Message');
 const BackingTrack = require('./models/BackingTrack');
 const Notification = require('./models/Notification');
+const quizzesService = require('./db/quizzes');
 
 const app = express();
 const server = http.createServer(app);
@@ -476,7 +477,7 @@ app.get('/api/instructors', async (req, res) => {
 // Get all quizzes
 app.get('/api/quizzes', async (req, res) => {
     try {
-        const quizzes = await quizModel.getAll();
+        const quizzes = quizzesService.getAllQuizzes();
         
         // Add creator name to each quiz
         const quizzesWithCreators = quizzes.map(quiz => {
@@ -516,8 +517,8 @@ app.post('/api/quizzes/save-with-questions', async (req, res) => {
         // Map difficulty level to database format
         const mappedDifficultyLevel = mapDifficultyLevel(difficultyLevel);
 
-        // Create quiz
-        const quizId = await quizModel.create({
+        // Create quiz with questions
+        const quizId = quizzesService.createQuiz({
             title,
             description,
             creatorId,
@@ -527,21 +528,15 @@ app.post('/api/quizzes/save-with-questions', async (req, res) => {
             totalQuestions,
             isPublished: isPublished ? true : false,
             passingScore: 70,
-            questions: []
-        });
-
-        // Get the quiz and add questions
-        const quiz = await quizModel.getById(quizId);
-        if (quiz && Array.isArray(questions)) {
-            quiz.questions = questions.map((q, index) => ({
-                id: `q_${quizId}_${index}`,
+            questions: Array.isArray(questions) ? questions.map((q, index) => ({
+                id: `q_${index}`,
                 question: q.question,
                 options: q.options || [],
                 answer: q.answer,
                 type: 'multiple_choice',
                 orderIndex: index + 1
-            }));
-        }
+            })) : []
+        });
 
         res.status(201).json({
             message: 'Quiz saved successfully',
@@ -556,7 +551,7 @@ app.post('/api/quizzes/save-with-questions', async (req, res) => {
 // Get quizzes by creator (must come before :quizId route)
 app.get('/api/quizzes/creator/:creatorId', async (req, res) => {
     try {
-        const quizzes = await quizModel.getByCreator(req.params.creatorId);
+        const quizzes = quizzesService.getQuizzesByCreator(req.params.creatorId);
         res.json(quizzes);
     } catch (error) {
         console.error('Get creator quizzes error:', error);
@@ -567,19 +562,19 @@ app.get('/api/quizzes/creator/:creatorId', async (req, res) => {
 // Delete quiz (creator only)
 app.delete('/api/quizzes/:quizId', async (req, res) => {
     try {
-        const quizId = parseInt(req.params.quizId);
-        const userId = parseInt(req.query.userId || req.body.userId);
+        const quizId = req.params.quizId;
+        const userId = req.query.userId || req.body.userId;
 
-        const quiz = await quizModel.getById(quizId);
+        const quiz = quizzesService.getQuiz(quizId);
         if (!quiz) {
             return res.status(404).json({ error: 'Quiz not found' });
         }
 
-        if (quiz.creatorId !== userId) {
+        if (String(quiz.creatorId) !== String(userId)) {
             return res.status(403).json({ error: 'Not authorized to delete this quiz' });
         }
 
-        await quizModel.delete(quizId);
+        quizzesService.deleteQuiz(quizId);
         res.json({ message: 'Quiz deleted successfully' });
     } catch (error) {
         console.error('Delete quiz error:', error);
@@ -591,7 +586,7 @@ app.delete('/api/quizzes/:quizId', async (req, res) => {
 // Get a specific quiz with questions (must come after more specific routes)
 app.get('/api/quizzes/:quizId', async (req, res) => {
     try {
-        const quiz = await quizModel.getById(req.params.quizId);
+        const quiz = quizzesService.getQuiz(req.params.quizId);
         if (!quiz) {
             return res.status(404).json({ error: 'Quiz not found' });
         }
@@ -752,18 +747,19 @@ app.post('/api/quizzes', async (req, res) => {
     try {
         const { title, description, creatorId, quizType, difficultyLevel, timeLimit } = req.body;
         
-        const result = await quizModel.create({
+        const quizId = quizzesService.createQuiz({
             title,
             description,
             creatorId,
             quizType,
             difficultyLevel,
-            timeLimit
+            timeLimit,
+            questions: []
         });
         
         res.status(201).json({
             message: 'Quiz created',
-            quizId: result.id
+            quizId: quizId
         });
         
     } catch (error) {
