@@ -8,34 +8,22 @@ async function initializeMongoDB() {
         const mongoUri = process.env.MONGODB_URI;
         
         if (!mongoUri) {
-            console.error('❌ MONGODB_URI environment variable is missing');
+            console.error('MONGODB_URI not set');
             return false;
         }
 
-        console.log('🔧 Connecting to MongoDB...');
-        
         mongoClient = new MongoClient(mongoUri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 10000,
-            socketTimeoutMS: 45000
+            maxPoolSize: 1,
+            serverSelectionTimeoutMS: 5000
         });
 
         await mongoClient.connect();
         db = mongoClient.db('jammazing');
-        
-        // Verify connection by pinging
-        await db.admin().ping();
-        console.log('✅ MongoDB connected successfully');
-
-        // Create indexes for faster lookups
-        await db.collection('users').createIndex({ email: 1 }, { unique: true });
-        await db.collection('users').createIndex({ username: 1 }, { unique: true });
-        
+        console.log('✅ MongoDB connected');
         return true;
+        
     } catch (error) {
-        console.error('❌ MongoDB initialization error:', error.message);
-        console.error('Stack:', error.stack);
+        console.error('MongoDB error:', error.message);
         return false;
     }
 }
@@ -84,7 +72,11 @@ class MongoDatabase {
     }
 
     async getUserById(id) {
-        return await this.db.collection('users').findOne({ _id: new ObjectId(id) });
+        try {
+            return await this.db.collection('users').findOne({ _id: new ObjectId(id) });
+        } catch (e) {
+            return null;
+        }
     }
 
     async getAllUsers() {
