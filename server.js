@@ -8,8 +8,8 @@ const http = require('http');
 const socketIO = require('socket.io');
 require('dotenv').config();
 
-// Import SQLite Database and Models
-const Database = require('./db/database');
+// Import In-Memory Database and Models
+const MemoryDatabase = require('./db/memory');
 const User = require('./models/User');
 const Quiz = require('./models/Quiz');
 const LiveStream = require('./models/LiveStream');
@@ -83,34 +83,28 @@ async function initializeApp() {
     
     dbInitPromise = (async () => {
         try {
-            // Initialize SQLite Database
-            db = new Database();
-            await db.initializeDatabase();
+            // Initialize In-Memory Database
+            db = new MemoryDatabase();
+            const initialized = await db.initialize();
             
-            // Initialize Models
-            userModel = new User(db);
-            quizModel = new Quiz(db);
-            liveStreamModel = new LiveStream(db);
-            messageModel = new Message(db);
-            backingTrackModel = new BackingTrack(db);
-            notificationModel = new Notification(db);
-            
-            dbInitialized = true;
-            console.log('✅ SQLite Database and models initialized successfully');
+            if (!initialized) {
+                console.error('❌ In-Memory Database initialization failed');
+                dbInitialized = false;
+            } else {
+                // Initialize Models
+                userModel = new User(db);
+                quizModel = new Quiz(db);
+                liveStreamModel = new LiveStream(db);
+                messageModel = new Message(db);
+                backingTrackModel = new BackingTrack(db);
+                notificationModel = new Notification(db);
+                
+                dbInitialized = true;
+                console.log('✅ In-Memory Database and models initialized successfully');
+            }
             
         } catch (error) {
             console.error('⚠️ Database initialization error:', error.message);
-            // Create dummy models so app doesn't crash
-            try {
-                userModel = new User(null);
-                quizModel = new Quiz(null);
-                liveStreamModel = new LiveStream(null);
-                messageModel = new Message(null);
-                backingTrackModel = new BackingTrack(null);
-                notificationModel = new Notification(null);
-            } catch (e) {
-                console.error('Failed to create models:', e.message);
-            }
             dbInitialized = false;
         }
     })();
