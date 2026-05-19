@@ -131,26 +131,21 @@ async function initializeApp() {
     return dbInitPromise;
 }
 
-// Start database initialization immediately on server startup
+// Start database initialization in background (don't wait for it)
 console.log('🔧 Initializing database on server startup...');
-initializeApp();
+initializeApp().catch(err => console.error('Init error:', err.message));
 
 // Middleware to ensure database is initialized before handling requests
 app.use(async (req, res, next) => {
-    // Wait for database initialization on first request
-    if (!dbInitialized && dbInitPromise) {
-        console.log('⏳ Waiting for database initialization...');
+    // Only wait for database on POST requests that need it
+    if ((req.method === 'POST' || req.method === 'PUT') && !dbInitialized && dbInitPromise) {
         try {
-            await dbInitPromise;
+            await Promise.race([
+                dbInitPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+            ]);
         } catch (err) {
-            console.error('Database initialization error:', err.message);
-        }
-    } else if (!dbInitialized && !dbInitPromise) {
-        console.log('🚀 Starting database initialization...');
-        try {
-            await initializeApp();
-        } catch (err) {
-            console.error('Background database initialization failed:', err.message);
+            console.error('Database wait error:', err.message);
         }
     }
     next();
@@ -193,8 +188,10 @@ app.get('/api/health', (req, res) => {
 // Register a new user
 app.post('/api/auth/register', async (req, res) => {
     try {
+        // Check if database is initialized
         if (!dbInitialized || !userModel) {
-            return res.status(503).json({ error: 'Database not ready. Please try again in a moment.' });
+            console.warn('Register called but database not initialized');
+            return res.status(503).json({ error: 'Database initializing. Please try again in a few moments.' });
         }
         
         const { firstName, lastName, email, username, password, accountType, instrument } = req.body;
@@ -210,37 +207,29 @@ app.post('/api/auth/register', async (req, res) => {
             }
         } catch (checkErr) {
             console.error('Email check failed:', checkErr.message);
-            return res.status(500).json({ error: 'Could not check existing email' });
+            return res.status(500).json({ error: 'Could not validate email' });
         }
         
-        try {
-            const hashedPassword = await bcrypt.hash(password, 12);
-            
-            const result = await userModel.create({
-                firstName,
-                lastName,
-                email,
-                username,
-                password: hashedPassword,
-                accountType,
-                instrument: instrument || ''
-            });
-            
-            res.status(201).json({
-                message: 'User registered successfully',
-                userId: result._id || result.id
-            });
-        } catch (createErr) {
-            console.error('User creation failed:', createErr.message);
-            if (createErr.message.includes('already exists')) {
-                return res.status(409).json({ error: createErr.message });
-            }
-            res.status(500).json({ error: 'User creation failed' });
-        }
+        const hashedPassword = await bcrypt.hash(password, 12);
+        
+        const result = await userModel.create({
+            firstName,
+            lastName,
+            email,
+            username,
+            password: hashedPassword,
+            accountType,
+            instrument: instrument || ''
+        });
+        
+        res.status(201).json({
+            message: 'User registered successfully',
+            userId: result._id || result.id
+        });
         
     } catch (error) {
-        console.error('Register endpoint error:', error.message);
-        res.status(500).json({ error: 'Registration failed' });
+        console.error('Register error:', error.message);
+        res.status(500).json({ error: error.message || 'Registration failed' });
     }
 });
 

@@ -14,10 +14,19 @@ async function initializeMongoDB() {
 
         mongoClient = new MongoClient(mongoUri, {
             maxPoolSize: 1,
-            serverSelectionTimeoutMS: 5000
+            serverSelectionTimeoutMS: 3000,
+            socketTimeoutMS: 3000,
+            connectTimeoutMS: 3000
         });
 
-        await mongoClient.connect();
+        // Add timeout wrapper
+        const connectPromise = mongoClient.connect();
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('MongoDB connection timeout')), 5000)
+        );
+
+        await Promise.race([connectPromise, timeoutPromise]);
+        
         db = mongoClient.db('jammazing');
         console.log('✅ MongoDB connected');
         return true;
