@@ -539,23 +539,24 @@
         };
 
         // Drums audio buffer cache and file maps by subType
+        // IMPORTANT: Only include files that exist in config/drive-files.json
         const drumsSamples = {};
         const drumsFileMap = {
-            'kick': ['RD_K_1.wav', 'RD_K_2.wav', 'RD_K_3.wav', 'RD_K_4.wav', 'RD_K_5.wav', 'RD_K_6.wav', 'RD_K_7.wav', 'RD_K_8.wav', 'RD_K_9.wav', 'RD_K_10.wav'],
-            'snare': ['RD_S_1.wav', 'RD_S_2.wav', 'RD_S_3.wav', 'RD_S_4.wav', 'RD_S_5.wav', 'RD_S_6.wav', 'RD_S_7.wav', 'RD_S_8.wav', 'RD_S_9.wav', 'RD_S_10.wav', 'RD_S_11.wav', 'RD_S_12.wav', 'RD_S_13.wav', 'RD_S_14.wav', 'RD_S_15.wav', 'RD_S_16.wav'],
-            'clap': ['RD_C_1.wav', 'RD_C_2.wav', 'RD_C_3.wav', 'RD_C_4.wav', 'RD_C_5.wav', 'RD_C_6.wav', 'RD_C_7.wav', 'RD_C_8.wav'],
-            'crash': ['RD_C_C_1.wav', 'RD_C_C_2.wav', 'RD_C_C_3.wav', 'RD_C_C_4.wav', 'RD_C_C_5.wav', 'RD_C_C_6.wav', 'RD_C_C_7.wav', 'RD_C_C_8.wav', 'RD_C_C_9.wav'],
-            'hihat': ['RD_C_HH_1.wav', 'RD_C_HH_2.wav', 'RD_C_HH_3.wav', 'RD_C_HH_4.wav', 'RD_C_HH_5.wav', 'RD_C_HH_6.wav', 'RD_C_HH_7.wav', 'RD_C_HH_8.wav', 'RD_C_HH_9.wav', 'RD_C_HH_10.wav', 'RD_C_HH_11.wav', 'RD_C_HH_12.wav', 'RD_C_HH_13.wav', 'RD_C_HH_14.wav', 'RD_C_HH_15.wav'],
-            'ride': ['RD_C_R_1.wav', 'RD_C_R_2.wav', 'RD_C_R_3.wav', 'RD_C_R_4.wav', 'RD_C_R_5.wav', 'RD_C_R_6.wav', 'RD_C_R_7.wav', 'RD_C_R_8.wav', 'RD_C_R_9.wav', 'RD_C_R_10.wav', 'RD_C_R_11.wav', 'RD_C_R_12.wav'],
-            'splash': ['RD_C_S_1.wav', 'RD_C_S_2.wav', 'RD_C_S_3.wav', 'RD_C_S_4.wav', 'RD_C_S_5.wav', 'RD_C_S_6.wav', 'RD_C_S_7.wav', 'RD_C_S_8.wav', 'RD_C_S_9.wav'],
-            'floor-tom': ['RD_T_FT_1.wav', 'RD_T_FT_2.wav', 'RD_T_FT_3.wav', 'RD_T_FT_4.wav', 'RD_T_FT_5.wav', 'RD_T_FT_6.wav', 'RD_T_FT_7.wav', 'RD_T_FT_8.wav'],
-            'high-tom': ['RD_T_HT_1.wav', 'RD_T_HT_2.wav', 'RD_T_HT_3.wav', 'RD_T_HT_4.wav', 'RD_T_HT_5.wav', 'RD_T_HT_6.wav', 'RD_T_HT_7.wav', 'RD_T_HT_8.wav', 'RD_T_HT_9.wav'],
-            'mid-tom': ['RD_T_MT_1.wav', 'RD_T_MT_2.wav', 'RD_T_MT_3.wav', 'RD_T_MT_4.wav', 'RD_T_MT_5.wav', 'RD_T_MT_6.wav', 'RD_T_MT_7.wav', 'RD_T_MT_8.wav', 'RD_T_MT_9.wav', 'RD_T_MT_10.wav'],
-            'blast-block': ['RD_P_BB_1.wav', 'RD_P_BB_2.wav', 'RD_P_BB_3.wav', 'RD_P_BB_4.wav', 'RD_P_BB_5.wav', 'RD_P_BB_6.wav', 'RD_P_BB_7.wav', 'RD_P_BB_8.wav', 'RD_P_BB_9.wav', 'RD_P_BB_10.wav'],
-            'cowbell': ['RD_P_C_1.wav', 'RD_P_C_2.wav', 'RD_P_C_3.wav', 'RD_P_C_4.wav', 'RD_P_C_5.wav', 'RD_P_C_6.wav', 'RD_P_C_7.wav', 'RD_P_C_8.wav'],
-            'egg-shaker': ['RD_P_ES_1.wav', 'RD_P_ES_2.wav', 'RD_P_ES_3.wav', 'RD_P_ES_4.wav', 'RD_P_ES_5.wav', 'RD_P_ES_6.wav', 'RD_P_ES_7.wav', 'RD_P_ES_8.wav', 'RD_P_ES_9.wav', 'RD_P_ES_10.wav', 'RD_P_ES_11.wav', 'RD_P_ES_12_100BPM.wav', 'RD_P_ES_13_100BPM.wav', 'RD_P_ES_14_128BPM.wav', 'RD_P_ES_15_128BPM.wav', 'RD_P_ES_16_160BPM.wav'],
-            'sleigh-bells': ['RD_P_SB_1.wav', 'RD_P_SB_2.wav', 'RD_P_SB_3.wav', 'RD_P_SB_4.wav', 'RD_P_SB_5.wav'],
-            'stick-hits': ['RD_P_SH_1.wav', 'RD_P_SH_2.wav', 'RD_P_SH_3.wav']
+            'kick': ['RD_K_1.wav', 'RD_K_2.wav'],
+            'snare': ['RD_S_1.wav'],
+            'clap': ['RD_C_1.wav'],
+            'crash': ['RD_C_C_1.wav'],
+            'hihat': ['RD_C_HH_1.wav'],
+            'ride': ['RD_C_R_1.wav'],
+            'splash': ['RD_C_S_1.wav'],
+            'floor-tom': ['RD_T_FT_1.wav'],
+            'high-tom': ['RD_T_HT_1.wav'],
+            'mid-tom': ['RD_T_MT_1.wav'],
+            'blast-block': ['RD_P_BB_1.wav'],
+            'cowbell': ['RD_P_C_1.wav'],
+            'egg-shaker': ['RD_P_ES_1.wav'],
+            'sleigh-bells': ['RD_P_SB_1.wav'],
+            'stick-hits': ['RD_P_SH_1.wav']
         };
 
 
