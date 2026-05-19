@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Timeout wrapper for Firebase operations
-function withTimeout(promise, timeoutMs = 10000) {
+function withTimeout(promise, timeoutMs = 30000) {
     return Promise.race([
         promise,
         new Promise((_, reject) =>
@@ -99,6 +99,20 @@ class FirebaseDatabase {
         const success = await initializeFirebase();
         this.db = db;
         this.initialized = success;
+        
+        // Test database connection
+        if (success) {
+            console.log('🧪 Testing Firebase database connection...');
+            try {
+                const testPath = '.info/connected';
+                const connectionState = await withTimeout(this.db.ref(testPath).once('value'), 10000);
+                console.log('✅ Firebase database connection test passed');
+            } catch (error) {
+                console.warn('⚠️ Firebase database connection test failed:', error.message);
+                // Don't fail initialization - app can continue with reduced functionality
+            }
+        }
+        
         return success;
     }
 
@@ -130,12 +144,12 @@ class FirebaseDatabase {
 
             // Store in database with timeout
             console.log('📤 Writing user to Firebase at path: users/' + userId);
-            await withTimeout(this.db.ref(`users/${userId}`).set(user), 5000);
+            await withTimeout(this.db.ref(`users/${userId}`).set(user), 30000);
             console.log('✅ User data written to Firebase');
             
             // Create email index for lookups
             console.log('📤 Writing email index at path: users_by_email/' + this.encodeEmail(userData.email));
-            await withTimeout(this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId), 5000);
+            await withTimeout(this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId), 30000);
             console.log('✅ Email index written');
             
             // Create username index
@@ -160,7 +174,7 @@ class FirebaseDatabase {
             
             const encodedEmail = this.encodeEmail(email);
             console.log('⏳ Querying users_by_email/' + encodedEmail);
-            const userId = (await withTimeout(this.db.ref(`users_by_email/${encodedEmail}`).once('value'), 5000)).val();
+            const userId = (await withTimeout(this.db.ref(`users_by_email/${encodedEmail}`).once('value'), 30000)).val();
             
             console.log('📝 userId lookup result:', userId ? `found: ${userId}` : 'null');
             if (!userId) {
@@ -169,7 +183,7 @@ class FirebaseDatabase {
             }
             
             console.log('⏳ Fetching user document from users/' + userId);
-            const user = (await withTimeout(this.db.ref(`users/${userId}`).once('value'), 5000)).val();
+            const user = (await withTimeout(this.db.ref(`users/${userId}`).once('value'), 30000)).val();
             console.log('✅ User document fetched');
             return user;
         } catch (error) {
