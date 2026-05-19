@@ -32,6 +32,27 @@ function loadFileIdMap() {
 loadFileIdMap();
 
 /**
+ * Download file from Google Drive
+ * Returns: Promise<Buffer> - audio file buffer
+ */
+function downloadFile(fileId) {
+    if (!fileId) return Promise.reject(new Error('No file ID provided'));
+    
+    const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    
+    return fetch(downloadUrl)
+        .then(response => {
+            if (!response.ok) throw new Error(`Failed to download file: ${response.statusText}`);
+            return response.arrayBuffer();
+        })
+        .then(arrayBuffer => Buffer.from(arrayBuffer))
+        .catch(error => {
+            console.error(`Error downloading file ${fileId}:`, error);
+            throw error;
+        });
+}
+
+/**
  * Get file ID from config by path
  * Example paths: "Piano/1. a0.wav", "Guitar/A2A3.wav", "Drums/Kick/RD_K_1.wav"
  */

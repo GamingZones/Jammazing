@@ -569,26 +569,19 @@
                 return Promise.resolve(null);
             }
             
-            // Request download URL from API
+            // Fetch audio file directly from backend (proxied from Google Drive)
             return fetch(`/api/drive/file?path=Piano/${encodeURIComponent(fileName)}`)
                 .then(response => {
                     if (!response.ok) {
                         console.warn(`File not configured in Google Drive: Piano/${fileName}`);
                         throw new Error(`${response.status}: ${response.statusText}`);
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    // Now fetch the audio file from Google Drive
-                    return fetch(data.url);
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error(`Failed to fetch audio: ${response.statusText}`);
                     return response.arrayBuffer();
                 })
                 .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
                 .then(audioBuffer => {
                     pianoSamples[noteName] = audioBuffer;
+                    console.log(`✅ Loaded piano sample: ${noteName}`);
                     return audioBuffer;
                 })
                 .catch(error => {
@@ -653,18 +646,13 @@
                 return Promise.resolve(null);
             }
             
-            // Request download URL from API
+            // Fetch audio file directly from backend (proxied from Google Drive)
             return fetch(`/api/drive/file?path=Guitar/${encodeURIComponent(fileName)}`)
                 .then(response => {
                     if (!response.ok) {
                         console.warn(`File not configured in Google Drive: Guitar/${fileName}`);
                         throw new Error(`${response.status}: ${response.statusText}`);
                     }
-                    return response.json();
-                })
-                .then(data => fetch(data.url))
-                .then(response => {
-                    if (!response.ok) throw new Error(`Failed to fetch audio: ${response.statusText}`);
                     return response.arrayBuffer();
                 })
                 .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
@@ -712,18 +700,13 @@
             const folderPath = folderMap[subType] || subType;
             const fullPath = `Drums/${folderPath}/${fileName}`;
             
-            // Request download URL from API
+            // Fetch audio file directly from backend (proxied from Google Drive)
             return fetch(`/api/drive/file?path=${encodeURIComponent(fullPath)}`)
                 .then(response => {
                     if (!response.ok) {
                         console.warn(`File not configured in Google Drive: ${fullPath}`);
                         throw new Error(`${response.status}: ${response.statusText}`);
                     }
-                    return response.json();
-                })
-                .then(data => fetch(data.url))
-                .then(response => {
-                    if (!response.ok) throw new Error(`Failed to fetch audio: ${response.statusText}`);
                     return response.arrayBuffer();
                 })
                 .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))

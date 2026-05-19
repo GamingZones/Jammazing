@@ -1807,7 +1807,7 @@ app.get('/api/posts/:id/reactions', async (req, res) => {
 // ==================== GOOGLE DRIVE INTEGRATION ====================
 const gdriveService = require('./db/gdrive');
 
-// Get file by path - returns direct Google Drive download URL
+// Get file by path - returns audio buffer (proxied from Google Drive)
 // Usage: /api/drive/file?path=Piano/1.%20a0.wav
 app.get('/api/drive/file', async (req, res) => {
     try {
@@ -1829,12 +1829,12 @@ app.get('/api/drive/file', async (req, res) => {
             });
         }
         
-        // Return the direct Google Drive download URL
-        res.json({
-            url: fileInfo.url,
-            path: fileInfo.path,
-            id: fileInfo.id
-        });
+        // Download file from Google Drive and return as binary
+        const buffer = await gdriveService.downloadFile(fileInfo.id);
+        res.setHeader('Content-Type', 'audio/wav');
+        res.setHeader('Content-Length', buffer.length);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        res.send(buffer);
     } catch (error) {
         console.error('Error in /api/drive/file:', error);
         res.status(500).json({ error: error.message });
