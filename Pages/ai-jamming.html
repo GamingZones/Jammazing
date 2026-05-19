@@ -626,6 +626,40 @@
             preloadPianoSamples();
         }
 
+        // Preload guitar samples
+        function preloadGuitarSamples() {
+            const notesToLoad = ['a2', 'a3', 'b2', 'b3', 'b3b4', 'b4', 'c#3', 'c#3c#4', 'c#4', 'd#4', 'd3', 'd5', 'e2', 'e4', 'f2', 'f2f3'];
+            notesToLoad.forEach(noteName => {
+                loadGuitarSample(noteName).catch(() => {
+                    // Silent fail for any that don't exist
+                });
+            });
+        }
+
+        // Start preloading guitar samples
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', preloadGuitarSamples);
+        } else {
+            preloadGuitarSamples();
+        }
+
+        // Preload drums samples
+        function preloadDrumsSamples() {
+            const drumTypes = ['kick', 'snare', 'clap', 'crash', 'hihat', 'ride', 'splash', 'floor-tom', 'high-tom', 'mid-tom', 'blast-block', 'cowbell', 'egg-shaker', 'sleigh-bells', 'stick-hits'];
+            drumTypes.forEach(subType => {
+                loadDrumsSample(subType, 0).catch(() => {
+                    // Silent fail for any that don't exist
+                });
+            });
+        }
+
+        // Start preloading drums samples
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', preloadDrumsSamples);
+        } else {
+            preloadDrumsSamples();
+        }
+
         function loadGuitarSample(noteName) {
             // Handle slash notation like "F2/F3" -> map to "f3"
             let mapKey = noteName.toLowerCase();
