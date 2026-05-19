@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -568,7 +568,7 @@ button > [data-lucide], button > i { pointer-events:none; }
             const deleteBtn = String(post.userId) === String(currentUserId)
                 ? `<button onclick="deletePost('${post.id}', this)" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:18px;padding:0 4px;" title="Delete post"><i data-lucide="trash-2" style="width:16px;height:16px;pointer-events:none;"></i></button>`
                 : '';
-            return `<div class="post" data-post-id="${post.id}" onclick="openPostModal(${post.id}, event)" style="cursor:pointer;">
+            return `<div class="post" data-post-id="${post.id}" onclick="openPostModal('${post.id}', event)" style="cursor:pointer;">
                 <div class="post-header">
                     <div class="post-author-info">
                         <div class="post-avatar">${avatarHtml}</div>
@@ -1008,7 +1008,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                                                 <p style="margin:0;font-size:10px;color:var(--text-secondary);">${replyTime}</p>
                                             </div>
                                         </div>
-                                        ${isOwner ? `<button onclick="deleteReply(${r.id}, ${commentId})" style="padding:2px 6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='var(--border-color)';this.style.color='#e0245e';" onmouseout="this.style.background='transparent';this.style.color='var(--text-secondary)';"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;"></i></button>` : ''}
+                                        ${isOwner ? `<button onclick="deleteReply('${r.id}', '${commentId}')" style="padding:2px 6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='var(--border-color)';this.style.color='#e0245e';" onmouseout="this.style.background='transparent';this.style.color='var(--text-secondary)';"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;"></i></button>` : ''}
                                     </div>
                                     <p style="margin:0 0 6px 0;font-size:11px;color:var(--text-secondary);">
                                         ${(() => {
@@ -1024,8 +1024,8 @@ button > [data-lucide], button > i { pointer-events:none; }
                                         })()}
                                     </p>
                                     <div style="display:flex;gap:12px;font-size:10px;">
-                                        <span style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px;${likeColor}" onclick="likeReply(${r.id}, ${commentId}, this)" data-liked="${r.liked ? '1' : '0'}" data-like-count="${r.likeCount || 0}"><i data-lucide="heart" style="width:12px;height:12px;display:inline;${likeFill}"></i><span class="reply-like-count">${r.likeCount || 0}</span></span>
-                                        <span style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px;color:var(--text-secondary);" onclick="replyToReply(event, '${r.firstName} ${r.lastName}', '${r.username}', ${r.id}, ${commentId})"><i data-lucide="reply" style="width:12px;height:12px;display:inline;"></i><span>Reply</span></span>
+                                        <span style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px;${likeColor}" onclick="likeReply('${r.id}', '${commentId}', this)" data-liked="${r.liked ? '1' : '0'}" data-like-count="${r.likeCount || 0}"><i data-lucide="heart" style="width:12px;height:12px;display:inline;${likeFill}"></i><span class="reply-like-count">${r.likeCount || 0}</span></span>
+                                        <span style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px;color:var(--text-secondary);" onclick="replyToReply(event, '${r.firstName} ${r.lastName}', '${r.username}', '${r.id}', '${commentId}')"><i data-lucide="reply" style="width:12px;height:12px;display:inline;"></i><span>Reply</span></span>
                                     </div>
                                 </div>
                                 `;
@@ -1123,7 +1123,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                                                 <p style="margin:0;font-size:10px;color:var(--text-secondary);">${replyTime}</p>
                                             </div>
                                         </div>
-                                        ${isOwner ? `<button onclick="deleteReply(${r.id}, ${commentId})" style="padding:2px 6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='var(--border-color)';this.style.color='#e0245e';" onmouseout="this.style.background='transparent';this.style.color='var(--text-secondary)';"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;"></i></button>` : ''}
+                                        ${isOwner ? `<button onclick="deleteReply('${r.id}', '${commentId}')" style="padding:2px 6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='var(--border-color)';this.style.color='#e0245e';" onmouseout="this.style.background='transparent';this.style.color='var(--text-secondary)';"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;"></i></button>` : ''}
                                     </div>
                                     <p style="margin:0 0 6px 0;font-size:11px;color:var(--text-secondary);">
                                         ${(() => {
@@ -1139,7 +1139,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                                         })()}
                                     </p>
                                     <div style="display:flex;gap:12px;font-size:10px;">
-                                        <span style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px;${likeColor}" onclick="likeReply(${r.id}, ${commentId}, this)" data-liked="${r.liked ? '1' : '0'}" data-like-count="${r.likeCount || 0}"><i data-lucide="heart" style="width:12px;height:12px;display:inline;${likeFill}"></i><span class="reply-like-count">${r.likeCount || 0}</span></span>
+                                        <span style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px;${likeColor}" onclick="likeReply('${r.id}', '${commentId}', this)" data-liked="${r.liked ? '1' : '0'}" data-like-count="${r.likeCount || 0}"><i data-lucide="heart" style="width:12px;height:12px;display:inline;${likeFill}"></i><span class="reply-like-count">${r.likeCount || 0}</span></span>
                                         <span style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:3px;color:var(--text-secondary);" onclick="replyToReply(event, '${r.firstName} ${r.lastName}', ${r.id}, ${commentId})"><i data-lucide="reply" style="width:12px;height:12px;display:inline;"></i><span>Reply</span></span>
                                     </div>
                                 </div>
@@ -1399,7 +1399,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                                                 <p style="margin:0;font-size:10px;color:var(--text-secondary);">${replyTime}</p>
                                             </div>
                                         </div>
-                                        ${isOwner ? `<button onclick="deleteReply(${r.id}, ${commentId})" style="padding:2px 6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='var(--border-color)';this.style.color='#e0245e';" onmouseout="this.style.background='transparent';this.style.color='var(--text-secondary)';"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;"></i></button>` : ''}
+                                        ${isOwner ? `<button onclick="deleteReply('${r.id}', '${commentId}')" style="padding:2px 6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='var(--border-color)';this.style.color='#e0245e';" onmouseout="this.style.background='transparent';this.style.color='var(--text-secondary)';"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;"></i></button>` : ''}
                                     </div>
                                     <p style="margin:0;font-size:11px;color:var(--text-secondary);">${r.content}</p>
                                 </div>
