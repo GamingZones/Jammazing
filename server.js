@@ -55,7 +55,15 @@ app.use(cors({
 app.use(bodyParser.json({ strict: false, limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
-// Static Files - Serve from root directory
+// Static Files - Serve CSS, JS, and other assets
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/models', express.static(path.join(__dirname, 'models')));
+app.use('/Notes', express.static(path.join(__dirname, 'Notes')));
+app.use('/scripts', express.static(path.join(__dirname, 'scripts')));
+app.use('/Pages', express.static(path.join(__dirname, 'Pages')));
+
+// Also serve from root for other assets
 app.use(express.static(path.join(__dirname)));
 
 // Database Instance
@@ -1985,6 +1993,30 @@ io.on('connection', (socket) => {
             }
         }
     });
+});
+
+// ==================== CATCH-ALL ROUTES ====================
+// Serve HTML files for any remaining requests
+app.get('*.html', (req, res) => {
+    const filePath = path.join(__dirname, req.path);
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            res.status(404).json({ error: 'Page not found' });
+        }
+    });
+});
+
+// Catch-all for any other requests - serve index or return 404
+app.use((req, res) => {
+    if (req.accepts('html')) {
+        res.status(404).sendFile(path.join(__dirname, 'Pages', 'index.html'), (err) => {
+            if (err) {
+                res.status(404).json({ error: 'Not found' });
+            }
+        });
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
 });
 
 // Start server
