@@ -156,6 +156,17 @@ async function initializeApp() {
     }
 }
 
+// ==================== ROOT ROUTE ====================
+// Serve index.html for root path
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'Pages', 'index.html'));
+});
+
+// Favicon route (return empty response to avoid 404)
+app.get('/favicon.ico', (req, res) => {
+    res.status(204).send();
+});
+
 // ==================== USER ROUTES ====================
 
 // Register a new user
