@@ -176,13 +176,12 @@ async function initializeApp() {
 
 // Middleware to ensure database is initialized before handling requests
 app.use(async (req, res, next) => {
-    if (!dbInitialized) {
-        try {
-            await initializeApp();
-        } catch (error) {
-            console.error('Database initialization failed:', error);
-            return res.status(503).json({ error: 'Service unavailable - database initialization failed' });
-        }
+    // Only initialize on first request, don't block if it fails
+    if (!dbInitialized && !dbInitPromise) {
+        initializeApp().catch(err => {
+            console.error('Background database initialization failed:', err.message);
+            // Don't return error - let the app continue
+        });
     }
     next();
 });
@@ -200,7 +199,11 @@ app.get('/favicon.ico', (req, res) => {
 // Register a new user
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { firstName, lastName, email, username, password, accountType, instrument } = req.body; // Fixed: instruments → instrument
+        if (!userModel) {
+            return res.status(503).json({ error: 'Database not initialized. Please try again in a moment.' });
+        }
+        
+        const { firstName, lastName, email, username, password, accountType, instrument } = req.body;
         
         // Validate input
         if (!firstName || !lastName || !email || !username || !password || !accountType) {
@@ -241,6 +244,10 @@ app.post('/api/auth/register', async (req, res) => {
 // Login user
 app.post('/api/auth/login', async (req, res) => {
     try {
+        if (!userModel) {
+            return res.status(503).json({ error: 'Database not initialized. Please try again in a moment.' });
+        }
+        
         const { email, password } = req.body;
         
         if (!email || !password) {
