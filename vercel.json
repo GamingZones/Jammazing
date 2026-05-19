@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "buildCommand": "echo 'Build complete'",
+  "outputDirectory": "./",
+  "functions": {
+    "server.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
