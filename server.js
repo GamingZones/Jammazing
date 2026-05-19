@@ -8,8 +8,8 @@ const http = require('http');
 const socketIO = require('socket.io');
 require('dotenv').config();
 
-// Import MongoDB Database and Models
-const MongoDatabase = require('./db/mongodb');
+// Import In-Memory Database and Models
+const MemoryDatabase = require('./db/memory');
 const User = require('./models/User');
 const Quiz = require('./models/Quiz');
 const LiveStream = require('./models/LiveStream');
@@ -84,13 +84,13 @@ async function initializeApp() {
     
     dbInitPromise = (async () => {
         try {
-            // Initialize MongoDB Database
-            db = new MongoDatabase();
+            // Initialize In-Memory Database
+            db = new MemoryDatabase();
             const initialized = await db.initialize();
             
             if (!initialized) {
-                console.error('❌ MongoDB initialization failed');
-                // Still create models with non-working db
+                console.error('❌ In-Memory Database initialization failed');
+                // Still create models
                 userModel = new User(db);
                 quizModel = new Quiz(db);
                 liveStreamModel = new LiveStream(db);
@@ -108,7 +108,7 @@ async function initializeApp() {
                 notificationModel = new Notification(db);
                 
                 dbInitialized = true;
-                console.log('✅ MongoDB Database and models initialized successfully');
+                console.log('✅ In-Memory Database and models initialized successfully');
             }
             
         } catch (error) {
@@ -2055,7 +2055,8 @@ server.listen(PORT, async () => {
         await initializeApp();
         console.log(`\n🎵 Jammazing server running on http://localhost:${PORT}`);
         console.log(`📊 API endpoints ready`);
-        console.log(`✨ Your database is connected and operational\n`);
+        console.log(`💾 Using In-Memory Database (data stored in RAM)`);
+        console.log(`⚠️  Data will be lost when server restarts\n`);
         console.log(`🔌 WebSocket signaling server ready on port ${PORT}\n`);
     } catch (err) {
         console.error('Failed to start server:', err.message);
