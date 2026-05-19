@@ -182,8 +182,17 @@ app.post('/api/auth/register', async (req, res) => {
         // Check if user exists
         console.log('🔍 Checking if user already exists...');
         console.log('🔍 Calling userModel.getByEmail with:', email);
-        const existingUser = await userModel.getByEmail(email);
-        console.log('🔍 getByEmail returned:', existingUser ? 'USER FOUND' : 'no user found');
+        console.log('⏳ About to await getByEmail...');
+        
+        let existingUser;
+        try {
+            existingUser = await userModel.getByEmail(email);
+            console.log('✅ getByEmail completed, result:', existingUser ? 'USER FOUND' : 'no user found');
+        } catch (err) {
+            console.error('❌ getByEmail threw error:', err.message);
+            throw err;
+        }
+        
         if (existingUser) {
             console.warn('⚠️ User already exists:', email);
             return res.status(409).json({ error: 'Email already registered' });
@@ -192,19 +201,34 @@ app.post('/api/auth/register', async (req, res) => {
         
         // Hash password
         console.log('🔐 Hashing password...');
-        const hashedPassword = await bcrypt.hash(password, 12);
+        let hashedPassword;
+        try {
+            hashedPassword = await bcrypt.hash(password, 12);
+            console.log('✅ Password hashed successfully');
+        } catch (hashErr) {
+            console.error('❌ Password hashing failed:', hashErr.message);
+            throw hashErr;
+        }
         
         // Create user
         console.log('💾 Creating user in database...');
-        const result = await userModel.create({
-            firstName,
-            lastName,
-            email,
-            username,
-            password: hashedPassword,
-            accountType,
-            instrument: instrument || ''
-        });
+        let result;
+        try {
+            result = await userModel.create({
+                firstName,
+                lastName,
+                email,
+                username,
+                password: hashedPassword,
+                accountType,
+                instrument: instrument || ''
+            });
+            console.log('✅ userModel.create returned:', result ? 'SUCCESS' : 'null');
+        } catch (createErr) {
+            console.error('❌ userModel.create failed:', createErr.message);
+            console.error('   Stack:', createErr.stack);
+            throw createErr;
+        }
         
         console.log('✅ User registered successfully:', result.id);
         res.status(201).json({
