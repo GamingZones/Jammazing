@@ -275,14 +275,26 @@ app.post('/api/auth/login', async (req, res) => {
 // Get all users
 app.get('/api/users', async (req, res) => {
     try {
+        if (!userModel || !dbInitialized) {
+            // Return empty array if database not ready (don't crash frontend)
+            return res.json([]);
+        }
+        
         const { accountType } = req.query;
         const users = accountType
             ? await userModel.getUsersByAccountType(accountType)
             : await userModel.getAll();
-        res.json(users);
+        
+        // Remove passwords from response
+        const safeUsers = users.map(u => {
+            const { password, ...safe } = u;
+            return safe;
+        });
+        
+        res.json(safeUsers);
     } catch (error) {
-        console.error('Get all users error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Get users error:', error);
+        res.json([]); // Return empty array on error
     }
 });
 
@@ -397,17 +409,23 @@ app.post('/api/users/:id/profile-picture', async (req, res) => {
 // Get user profile
 app.get('/api/users/:id', async (req, res) => {
     try {
+        if (!userModel || !dbInitialized) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
         const user = await userModel.getById(req.params.id);
         
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        res.json(user);
+        // Remove password from response
+        const { password, ...safe } = user;
+        res.json(safe);
         
     } catch (error) {
         console.error('Get user error:', error);
-        res.status(500).json({ error: error.message });
+        res.status(404).json({ error: 'User not found' });
     }
 });
 
@@ -1386,11 +1404,15 @@ app.get('/api/backing-tracks/popular', async (req, res) => {
 // Get user notifications
 app.get('/api/notifications/:userId', async (req, res) => {
     try {
-        const notifications = await notificationModel.getForUser(req.params.userId);
-        res.json(notifications);
+        if (!notificationModel || !dbInitialized) {
+            return res.json([]); // Return empty array if database not ready
+        }
+        
+        const notifications = await notificationModel.getUserNotifications(req.params.userId);
+        res.json(notifications || []);
     } catch (error) {
         console.error('Get notifications error:', error);
-        res.status(500).json({ error: error.message });
+        res.json([]); // Return empty array on error
     }
 });
 
