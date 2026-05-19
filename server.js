@@ -158,6 +158,15 @@ app.get('/favicon.ico', (req, res) => {
     res.status(204).send();
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: dbInitialized ? 'ready' : 'initializing',
+        database: dbInitialized ? 'connected' : 'connecting',
+        mongodb_uri_set: !!process.env.MONGODB_URI
+    });
+});
+
 // ==================== USER ROUTES ====================
 
 // Register a new user
@@ -182,7 +191,7 @@ app.post('/api/auth/register', async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 12);
         
-        // Create and save user to Firebase
+        // Create and save user to MongoDB
         const result = await userModel.create({
             firstName,
             lastName,
@@ -195,12 +204,19 @@ app.post('/api/auth/register', async (req, res) => {
         
         res.status(201).json({
             message: 'User registered successfully',
-            userId: result.id
+            userId: result._id || result.id
         });
         
     } catch (error) {
-        console.error('Register error:', error.message);
-        res.status(500).json({ error: error.message || 'Registration failed' });
+        console.error('❌ Register error:', error.message);
+        console.error('Stack:', error.stack);
+        
+        // Return user-friendly error message
+        const statusCode = error.message.includes('already exists') ? 409 : 500;
+        res.status(statusCode).json({ 
+            error: error.message || 'Registration failed',
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 

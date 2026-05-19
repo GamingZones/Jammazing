@@ -35,6 +35,7 @@ async function initializeMongoDB() {
         return true;
     } catch (error) {
         console.error('❌ MongoDB initialization error:', error.message);
+        console.error('Stack:', error.stack);
         return false;
     }
 }
