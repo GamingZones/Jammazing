@@ -319,7 +319,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                     ? `<img src="${post.profilePicture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
                     : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="36" height="36" fill="none"><circle cx="32" cy="24" r="13" fill="rgba(255,255,255,0.85)"/><ellipse cx="32" cy="54" rx="22" ry="13" fill="rgba(255,255,255,0.85)"/></svg>`;
                 const deleteBtn = String(post.userId) === String(currentUserId)
-                    ? `<button onclick="deletePost(${post.id}, this)" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:18px;padding:0 4px;" title="Delete post"><i data-lucide="trash-2" style="width:16px;height:16px;pointer-events:none;"></i></button>`
+                    ? `<button onclick="deletePost('${post.id}', this)" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:18px;padding:0 4px;" title="Delete post"><i data-lucide="trash-2" style="width:16px;height:16px;pointer-events:none;"></i></button>`
                     : '';
                 const repostBanner = post.repostedByUsername
                     ? `<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);padding:6px 12px 0;">
@@ -328,7 +328,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                       </div>`
                     : '';
                 return `
-                <div class="post" data-post-id="${post.id}" onclick="openPostModal(${post.id}, event)" style="cursor:pointer;">
+                <div class="post" data-post-id="${post.id}" onclick="openPostModal('${post.id}', event)" style="cursor:pointer;">
                     ${repostBanner}
                     <div class="post-header">
                         <div class="post-author-info">
@@ -344,8 +344,8 @@ button > [data-lucide], button > i { pointer-events:none; }
                     ${_renderMediaHtml(post.imageData)}
                     <div class="post-actions">
                         <span class="action-item" onclick="toggleLike(this)" data-liked="0" style="cursor:pointer;user-select:none;"><i data-lucide="heart" class="like-icon" style="width:16px;height:16px;"></i> <span class="like-count">${post.likeCount||0}</span> Like</span>
-                        <span class="action-item" onclick="toggleRepost(this, ${post.id})" data-reposted="${post.userReposted||0}" data-post-id="${post.id}" style="cursor:pointer;user-select:none;${post.userReposted ? 'color:#17bf63;' : ''}"><i data-lucide="repeat-2" class="repost-icon" style="width:16px;height:16px;"></i> <span class="repost-count">${post.repostCount||0}</span> Repost</span>
-                        <span class="action-item" onclick="toggleCommentBox(this, ${post.id})" style="cursor:pointer;user-select:none;"><i data-lucide="message-circle" style="width:16px;height:16px;"></i> <span class="comment-count">${post.commentCount||0}</span> Comment</span>
+                        <span class="action-item" onclick="toggleRepost(this, '${post.id}')" data-reposted="${post.userReposted||0}" data-post-id="${post.id}" style="cursor:pointer;user-select:none;${post.userReposted ? 'color:#17bf63;' : ''}"><i data-lucide="repeat-2" class="repost-icon" style="width:16px;height:16px;"></i> <span class="repost-count">${post.repostCount||0}</span> Repost</span>
+                        <span class="action-item" onclick="toggleCommentBox(this, '${post.id}')" style="cursor:pointer;user-select:none;"><i data-lucide="message-circle" style="width:16px;height:16px;"></i> <span class="comment-count">${post.commentCount||0}</span> Comment</span>
                     </div>
                     <div class="comment-box" style="display:none;padding:8px 0 4px;" data-post-id="${post.id}" data-loaded="0">
                         <input type="text" class="comment-input" placeholder="Write a comment..." style="width:100%;padding:8px 12px;border-radius:20px;border:1px solid var(--border-color);background:var(--input-bg,var(--card-bg));color:var(--text-primary);outline:none;font-size:13px;" onkeydown="if(event.key==='Enter'){submitComment(this);}">
@@ -566,7 +566,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                 ? `<img src="${post.profilePicture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
                 : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="36" height="36" fill="none"><circle cx="32" cy="24" r="13" fill="rgba(255,255,255,0.85)"/><ellipse cx="32" cy="54" rx="22" ry="13" fill="rgba(255,255,255,0.85)"/></svg>`;
             const deleteBtn = String(post.userId) === String(currentUserId)
-                ? `<button onclick="deletePost(${post.id}, this)" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:18px;padding:0 4px;" title="Delete post"><i data-lucide="trash-2" style="width:16px;height:16px;pointer-events:none;"></i></button>`
+                ? `<button onclick="deletePost('${post.id}', this)" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:18px;padding:0 4px;" title="Delete post"><i data-lucide="trash-2" style="width:16px;height:16px;pointer-events:none;"></i></button>`
                 : '';
             return `<div class="post" data-post-id="${post.id}" onclick="openPostModal(${post.id}, event)" style="cursor:pointer;">
                 <div class="post-header">
@@ -653,7 +653,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                         <p style="color:var(--text-primary);font-weight:600;margin:0;font-size:14px;">${post.firstName || ''} ${post.lastName || ''}</p>
                         <p style="color:var(--text-secondary);font-size:12px;margin:0;">@${post.username || 'user'}</p>
                     </div>
-                    ${isOwner ? `<button onclick="deletePostFromModal(${post.id})" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:6px;border-radius:6px;transition:all 0.2s;display:flex;align-items:center;" onmouseover="this.style.color='#e0245e';this.style.background='rgba(224,36,94,0.1)'" onmouseout="this.style.color='var(--text-secondary)';this.style.background='transparent'" title="Delete post"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>` : ''}
+                    ${isOwner ? `<button onclick="deletePostFromModal('${post.id}')" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:6px;border-radius:6px;transition:all 0.2s;display:flex;align-items:center;" onmouseover="this.style.color='#e0245e';this.style.background='rgba(224,36,94,0.1)'" onmouseout="this.style.color='var(--text-secondary)';this.style.background='transparent'" title="Delete post"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>` : ''}
                 `;
                 
                 headerDiv.dataset.postId = post.id;
@@ -717,7 +717,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                                                 <p style="margin:0;color:var(--text-primary);font-weight:600;font-size:12px;"><strong>${c.firstName} ${c.lastName}</strong></p>
                                                 <p style="margin:0 0 2px 0;color:var(--text-secondary);font-size:10px;">${commentTime}</p>
                                             </div>
-                                            ${isCommentOwner ? `<button onclick="deleteCommentFromModal(${c.id}, this)" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:2px 4px;border-radius:4px;transition:all 0.2s;flex-shrink:0;" onmouseover="this.style.color='#e0245e';" onmouseout="this.style.color='var(--text-secondary)';" title="Delete comment"><i data-lucide="trash-2" style="width:13px;height:13px;display:inline;"></i></button>` : ''}
+                                            ${isCommentOwner ? `<button onclick="deleteCommentFromModal('${c.id}', this)" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:2px 4px;border-radius:4px;transition:all 0.2s;flex-shrink:0;" onmouseover="this.style.color='#e0245e';" onmouseout="this.style.color='var(--text-secondary)';" title="Delete comment"><i data-lucide="trash-2" style="width:13px;height:13px;display:inline;"></i></button>` : ''}
                                         </div>
                                         <p style="margin:4px 0 0 0;color:var(--text-secondary);font-size:12px;">${c.content}</p>
                                         <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;">
@@ -1226,7 +1226,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                                         <p style="margin:0;font-size:10px;color:var(--text-secondary);">${replyTime}</p>
                                     </div>
                                 </div>
-                                ${isOwner ? `<button onclick="deleteReply(${r.id}, ${commentId})" style="padding:2px 6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='var(--border-color)';this.style.color='#e0245e';" onmouseout="this.style.background='transparent';this.style.color='var(--text-secondary)';" title="Delete reply"><i data-lucide="trash-2" style="width:14px;height:14px;display:inline;"></i></button>` : ''}
+                                <${isOwner ? `<button onclick="deleteReply('${r.id}', '${commentId}')" style="padding:2px 6px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;font-size:12px;border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='var(--border-color)';this.style.color='#e0245e';" onmouseout="this.style.background='transparent';this.style.color='var(--text-secondary)';"<i data-lucide="trash-2" style="width:14px;height:14px;display:inline;"></i></button>` : ''}
                             </div>
                             <p style="margin:0 0 6px 0;font-size:11px;color:var(--text-secondary);">${contentHtml}</p>
                             <div style="display:flex;gap:12px;font-size:10px;">
@@ -1309,7 +1309,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                 : `<div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);flex-shrink:0;"></div>`;
             const ts = createdAt ? `<span style="font-size:11px;color:var(--text-secondary);margin-left:6px;">${timeAgo(createdAt)}</span>` : '';
             const delBtn = String(commentUserId) === String(currentUserId)
-                ? `<button onclick="deleteComment(${commentId}, this)" style="background:none;border:none;cursor:pointer;color:#888;font-size:14px;padding:0 4px;margin-left:auto;" title="Delete">&times;</button>`
+                ? `<button onclick="deleteComment('${commentId}', this)" style="background:none;border:none;cursor:pointer;color:#888;font-size:14px;padding:0 4px;margin-left:auto;" title="Delete">&times;</button>`
                 : '';
             el.innerHTML = `
                 <div style="display:flex;gap:8px;align-items:flex-start;">
@@ -1435,7 +1435,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                                             <p style="margin:0;color:var(--text-primary);font-weight:600;font-size:12px;"><strong>${comment.firstName} ${comment.lastName}</strong></p>
                                             <p style="margin:0 0 2px 0;color:var(--text-secondary);font-size:10px;">${commentTime}</p>
                                         </div>
-                                        <button onclick="deleteCommentFromModal(${comment.id}, this)" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:2px 4px;border-radius:4px;transition:all 0.2s;flex-shrink:0;" onmouseover="this.style.color='#e0245e';" onmouseout="this.style.color='var(--text-secondary)';" title="Delete comment"><i data-lucide="trash-2" style="width:13px;height:13px;display:inline;"></i></button>
+                                        <button onclick="deleteCommentFromModal('${comment.id}', this)" style="background:transparent;border:none;cursor:pointer;color:var(--text-secondary);padding:2px 4px;border-radius:4px;transition:all 0.2s;flex-shrink:0;" onmouseover="this.style.color='#e0245e';" onmouseout="this.style.color='var(--text-secondary)';" title="Delete comment"><i data-lucide="trash-2" style="width:13px;height:13px;display:inline;"></i></button>
                                     </div>
                                     <p style="margin:4px 0 0 0;color:var(--text-secondary);font-size:12px;">${comment.content}</p>
                                     <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;">

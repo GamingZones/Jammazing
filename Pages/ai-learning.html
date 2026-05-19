@@ -222,8 +222,8 @@ button > [data-lucide], button > i { pointer-events:none; }
                     <div class="quiz-card-footer">
                         <span class="quiz-card-instructor"><i data-lucide="user" style="width:12px;height:12px;"></i> ${creator}</span>
                         <div style="display:flex;gap:8px;">
-                            ${String(quiz.creatorId) === String(currentUserId) ? `<button class="quiz-card-button" style="background:#e53e3e;" onclick="deleteQuiz(${quiz.id}, this)"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> Delete</button>` : ''}
-                            <button class="quiz-card-button" onclick="startQuiz(${quiz.id})"><i data-lucide="play" style="width:13px;height:13px;"></i> Start Quiz</button>
+                            ${String(quiz.creatorId) === String(currentUserId) ? `<button class="quiz-card-button" style="background:#e53e3e;" onclick="deleteQuiz('${quiz.id}', this)"><i data-lucide="trash-2" style="width:13px;height:13px;"></i> Delete</button>` : ''}
+                            <button class="quiz-card-button" onclick="startQuiz('${quiz.id}')"><i data-lucide="play" style="width:13px;height:13px;"></i> Start Quiz</button>
                         </div>
                     </div>
                 </div>`;
