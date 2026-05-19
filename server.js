@@ -83,11 +83,6 @@ async function initializeApp() {
     
     dbInitPromise = (async () => {
         try {
-            // Initialize Google Drive Service
-            console.log('🔧 Initializing Google Drive service...');
-            gdriveService.loadFileIdMap();
-            console.log('✅ Google Drive service initialized');
-            
             // Initialize In-Memory Database
             db = new MemoryDatabase();
             const initialized = await db.initialize();
@@ -116,7 +111,7 @@ async function initializeApp() {
             }
             
         } catch (error) {
-            console.error('⚠️ Initialization error:', error.message);
+            console.error('⚠️ Database initialization error:', error.message);
             // Create dummy models so app doesn't crash
             try {
                 userModel = new User(null);
