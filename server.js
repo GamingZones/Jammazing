@@ -125,6 +125,10 @@ async function initializeApp() {
     return dbInitPromise;
 }
 
+// Start database initialization immediately on server startup
+console.log('🔧 Initializing database on server startup...');
+initializeApp();
+
 // Middleware to ensure database is initialized before handling requests
 app.use(async (req, res, next) => {
     // Wait for database initialization on first request
