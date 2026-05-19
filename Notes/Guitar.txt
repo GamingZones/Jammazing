@@ -1,0 +1,16 @@
+Guitar/A2A3.wav https://drive.google.com/open?id=1JmqlItLFgAUh7kuIq2kWl8mAY6M2pUwV&usp=drive_copy
+Guitar/A3.wav https://drive.google.com/open?id=1QrM9VrGwDK-_yZsysekBcH6p8LGcne95&usp=drive_copy
+Guitar/B2.wav https://drive.google.com/open?id=10A8-6nraVwOrpJI6lUMYkuYNPEP-nZGc&usp=drive_copy
+Guitar/B3.wav https://drive.google.com/open?id=1F5B77YQSYs8HsiOpvkNugKLR5bGPAZFx&usp=drive_copy
+Guitar/B3B4.wav https://drive.google.com/open?id=11GENr9e15Z8yCZp2A-DwktzVOqogiJuI&usp=drive_copy
+Guitar/B4.wav https://drive.google.com/open?id=1Gz-AAa81j7LssNkSGIlyGHVS4n4kO5vF&usp=drive_copy
+Guitar/C#3.wav https://drive.google.com/open?id=1x6WclCZORb5xXAu5Y3GYPqM4iKuRpuFJ&usp=drive_copy
+Guitar/C#3C#4.wav https://drive.google.com/open?id=1e0CwQJW-T64AM6q_U2yJuc2MlnqlWd_W&usp=drive_copy
+Guitar/C#4.wav https://drive.google.com/open?id=1GXX0g5o84KwNhmg55ld9oIPu6Pxa-YBY&usp=drive_copy
+Guitar/D#4.wav https://drive.google.com/open?id=1zPYcj-xgz0vQqgAFINotXMS4lCoI1y55&usp=drive_copy
+Guitar/D3.wav https://drive.google.com/open?id=1vHTXeMnqE-lCnvbsz9PIBG6ypZoTOzwE&usp=drive_copy
+Guitar/D5.wav https://drive.google.com/open?id=1pHkTeEWCDsjVnE1BNC8CYxQG91saSm_P&usp=drive_copy
+Guitar/E2.wav https://drive.google.com/open?id=1ycHKhSZ3dlXbPFbxLUmHQeBdGybesZpc&usp=drive_copy
+Guitar/E4.wav https://drive.google.com/open?id=1bDjnd2PuagXG3leAd3u-T54fbNicvLZj&usp=drive_copy
+Guitar/F2.wav https://drive.google.com/open?id=1O2byfwzL5hgw6bYxY05BDl7gXPTtx7AR&usp=drive_copy
+Guitar/F2F3.wav https://drive.google.com/open?id=1wafaDpa1aEKvRSA_8M1RTQyz2fYIpcTa&usp=drive_copy

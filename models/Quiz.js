@@ -9,30 +9,33 @@ class Quiz {
     }
 
     async getById(id) {
-        return null;
+        return this.db.quizzes.get(id) || null;
     }
 
     async getAll() {
-        return [];
+        return Array.from(this.db.quizzes.values());
     }
 
     async getByCreator(creatorId) {
-        return [];
+        return Array.from(this.db.quizzes.values()).filter(q => String(q.creatorId) === String(creatorId));
     }
 
     async getActiveLiveStreams() {
-        return [];
+        return Array.from(this.db.liveStreams.values());
     }
 
     async getByDifficulty(difficulty) {
-        return [];
+        return Array.from(this.db.quizzes.values()).filter(q => q.difficultyLevel === difficulty);
     }
 
     async getByType(type) {
-        return [];
+        return Array.from(this.db.quizzes.values()).filter(q => q.quizType === type);
     }
 
     async update(id, updates) {
+        const quiz = this.db.quizzes.get(id);
+        if (!quiz) return false;
+        Object.assign(quiz, updates);
         return true;
     }
 
@@ -47,7 +50,7 @@ class Quiz {
     }
 
     async delete(id) {
-        return true;
+        return this.db.quizzes.delete(id);
     }
 }
 

@@ -1,0 +1,16 @@
+Drums/Kick/RD_K_1.wav  https://drive.google.com/open?id=1R-k0q_7n9JLJmmQ3ydBDfxfWXSq08yfB&usp=drive_copy
+Drums/Kick/RD_K_2.wav https://drive.google.com/open?id=1YbBI8JxHQKRjt5HYndXWTtXEOaJwYabE&usp=drive_copy
+Drums/Snare/RD_S_1.wav https://drive.google.com/open?id=17mJuk-wWMOj_qgVf1Gz5C6yV8Xf4oo0W&usp=drive_copy
+Drums/Claps/RD_C_1.wav https://drive.google.com/open?id=11IOj49MjTHCc_MsZfiNsoIa-u7Mt35t8&usp=drive_copy
+Drums/Cymbals/Crash/RD_C_C_1.wav https://drive.google.com/open?id=1Xm2sCN-Bf95badt7dlGX3C42PCExhiQS&usp=drive_copy
+Drums/Cymbals/Hi Hat/RD_C_HH_1.wav https://drive.google.com/open?id=19pDjmc0VHFfbZnE0NpH7Z0FOiAxYrdkl&usp=drive_copy
+Drums/Cymbals/Ride/RD_C_R_1.wav https://drive.google.com/open?id=1J7Z2oIf0PcFxfg9Bjoo4cJvgRNCC_epK&usp=drive_copy
+Drums/Cymbals/Splash/RD_C_S_1.wav https://drive.google.com/open?id=1FEUIuEMQl2EZiwCbAiOdbzJm1-HpfK4x&usp=drive_copy
+Drums/Toms/Floor Tom/RD_T_FT_1.wav https://drive.google.com/open?id=1UkstNtmMBJJ_xlm2IYN3OBUKdwWdMqTo&usp=drive_copy
+Drums/Toms/High Tom/RD_T_HT_1.wav https://drive.google.com/open?id=1hhl8NunZOzWXBcY_57KHcsFyycBe2Lw4&usp=drive_copy
+Drums/Toms/Mid Tom/RD_T_MT_1.wav https://drive.google.com/open?id=19cv2MKHY6bnFwBbE1QZssn908lW9PKxg&usp=drive_copy
+Drums/Percussion/Blast Block/RD_P_BB_1.wav https://drive.google.com/open?id=13H7Zkp7eWMB2yB1fWBVYp65i5MxhyGfH&usp=drive_copy
+Drums/Percussion/Cowbell/RD_P_C_1.wav https://drive.google.com/open?id=1MDnd2N6DbrnKiCLp9FgeRTRD7fuki7dQ&usp=drive_copy
+Drums/Percussion/Egg Shaker/RD_P_ES_1.wav https://drive.google.com/open?id=1tWl1rdf02t_6nK5A-hp638KKcOSkPeQx&usp=drive_copy
+Drums/Percussion/Sleigh Bells/RD_P_SB_1.wav https://drive.google.com/open?id=1Ue1i4yIgqsiyr3a8XnBa7wWuiogsGvdo&usp=drive_copy
+Drums/Percussion/Stick Hits/RD_P_SH_1.wav https://drive.google.com/open?id=1YyFRoC5mekitlqPEFVqcG9AY9DNwuDAU&usp=drive_copy

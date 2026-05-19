@@ -477,7 +477,18 @@ app.get('/api/instructors', async (req, res) => {
 app.get('/api/quizzes', async (req, res) => {
     try {
         const quizzes = await quizModel.getAll();
-        res.json(quizzes);
+        
+        // Add creator name to each quiz
+        const quizzesWithCreators = quizzes.map(quiz => {
+            const creator = db.users.get(quiz.creatorId);
+            return {
+                ...quiz,
+                id: quiz._id || quiz.id,
+                creatorName: creator ? `${creator.firstName} ${creator.lastName}` : 'Unknown'
+            };
+        });
+        
+        res.json(quizzesWithCreators);
     } catch (error) {
         console.error('Get quizzes error:', error);
         res.status(500).json({ error: error.message });
@@ -506,50 +517,30 @@ app.post('/api/quizzes/save-with-questions', async (req, res) => {
         const mappedDifficultyLevel = mapDifficultyLevel(difficultyLevel);
 
         // Create quiz
-        const quizResult = await quizModel.create({
+        const quizId = await quizModel.create({
             title,
             description,
             creatorId,
             quizType,
             difficultyLevel: mappedDifficultyLevel,
             timeLimit,
-            passingScore: 70
+            totalQuestions,
+            isPublished: isPublished ? true : false,
+            passingScore: 70,
+            questions: []
         });
 
-        const quizId = quizResult.id || quizResult.lastID;
-
-        // Update quiz with total questions and published status
-        await db.run(
-            'UPDATE quizzes SET totalQuestions = ?, isPublished = ? WHERE id = ?',
-            [totalQuestions, isPublished ? 1 : 0, quizId]
-        );
-
-        // Save questions and options
-        if (Array.isArray(questions)) {
-            for (let i = 0; i < questions.length; i++) {
-                const q = questions[i];
-                
-                // Insert question
-                const questionResult = await db.run(
-                    'INSERT INTO quizQuestions (quizId, questionText, questionType, orderIndex) VALUES (?, ?, ?, ?)',
-                    [quizId, q.question, 'multiple_choice', i + 1]
-                );
-
-                const questionId = questionResult.id || questionResult.lastID;
-
-                // Insert options
-                if (Array.isArray(q.options)) {
-                    for (let j = 0; j < q.options.length; j++) {
-                        const option = q.options[j];
-                        const isCorrect = option === q.answer ? 1 : 0;
-
-                        await db.run(
-                            'INSERT INTO quizQuestionOptions (questionId, optionText, isCorrect, orderIndex) VALUES (?, ?, ?, ?)',
-                            [questionId, option, isCorrect, j + 1]
-                        );
-                    }
-                }
-            }
+        // Get the quiz and add questions
+        const quiz = await quizModel.getById(quizId);
+        if (quiz && Array.isArray(questions)) {
+            quiz.questions = questions.map((q, index) => ({
+                id: `q_${quizId}_${index}`,
+                question: q.question,
+                options: q.options || [],
+                answer: q.answer,
+                type: 'multiple_choice',
+                orderIndex: index + 1
+            }));
         }
 
         res.status(201).json({
@@ -605,29 +596,10 @@ app.get('/api/quizzes/:quizId', async (req, res) => {
             return res.status(404).json({ error: 'Quiz not found' });
         }
 
-        // Get quiz questions
-        const questions = await db.all(
-            'SELECT * FROM quizQuestions WHERE quizId = ? ORDER BY orderIndex',
-            [req.params.quizId]
-        );
-
-        // Get options for each question
-        const questionsWithOptions = await Promise.all(questions.map(async (q) => {
-            const options = await db.all(
-                'SELECT * FROM quizQuestionOptions WHERE questionId = ? ORDER BY orderIndex',
-                [q.id]
-            );
-            return {
-                id: q.id,
-                question: q.questionText,  // Map questionText to question
-                options: options.map(o => o.optionText),
-                answer: options.find(o => o.isCorrect)?.optionText || ''
-            };
-        }));
-
+        // Return quiz with its questions (already stored in the quiz object)
         res.json({
             ...quiz,
-            questions: questionsWithOptions
+            questions: quiz.questions || []
         });
     } catch (error) {
         console.error('Get quiz error:', error);
