@@ -9,15 +9,9 @@ class MemoryDatabase {
         this.messages = new Map();
         this.backingTracks = new Map();
         this.notifications = new Map();
-        this.posts = new Map();
-        this.post_likes = new Map();
-        this.post_reposts = new Map();
-        this.post_replies = new Map();
-        this.post_comments = new Map();
         this.emailIndex = new Map(); // email -> userId
         this.usernameIndex = new Map(); // username -> userId
         this.nextId = 1;
-        this.postId = 1;
         this.initialized = true;
     }
 
@@ -227,139 +221,6 @@ class MemoryDatabase {
     async getUnreadCount(userId) {
         return Array.from(this.notifications.values())
             .filter(n => n.userId === userId && !n.read).length;
-    }
-
-    // POSTS Operations - SQL-like interface
-    async run(sql, params = []) {
-        if (sql.includes('INSERT INTO posts')) {
-            const [userId, content, imageData, videoData] = params;
-            const postId = `post_${this.postId++}`;
-            const post = {
-                id: postId,
-                userId,
-                content,
-                imageData,
-                videoData,
-                createdAt: new Date().toISOString(),
-                likeCount: 0,
-                repostCount: 0,
-                replyCount: 0,
-                commentCount: 0
-            };
-            this.posts.set(postId, post);
-            return { id: postId };
-        } else if (sql.includes('DELETE FROM posts')) {
-            const [postId] = params;
-            this.posts.delete(postId);
-            return { changes: 1 };
-        } else if (sql.includes('INSERT INTO post_likes')) {
-            const [postId, userId] = params;
-            const likeId = `like_${postId}_${userId}`;
-            this.post_likes.set(likeId, { postId, userId, createdAt: new Date().toISOString() });
-            return { id: likeId };
-        } else if (sql.includes('DELETE FROM post_likes')) {
-            const [postId, userId] = params;
-            const likeId = `like_${postId}_${userId}`;
-            this.post_likes.delete(likeId);
-            return { changes: 1 };
-        } else if (sql.includes('INSERT INTO post_reposts')) {
-            const [postId, userId] = params;
-            const repostId = `repost_${postId}_${userId}`;
-            this.post_reposts.set(repostId, { postId, userId, createdAt: new Date().toISOString() });
-            return { id: repostId };
-        } else if (sql.includes('DELETE FROM post_reposts')) {
-            const [postId, userId] = params;
-            const repostId = `repost_${postId}_${userId}`;
-            this.post_reposts.delete(repostId);
-            return { changes: 1 };
-        } else if (sql.includes('INSERT INTO post_comments')) {
-            const [postId, userId, content] = params;
-            const commentId = `comment_${postId}_${userId}_${Date.now()}`;
-            this.post_comments.set(commentId, { id: commentId, postId, userId, content, createdAt: new Date().toISOString() });
-            return { id: commentId };
-        }
-        return { id: null };
-    }
-
-    async get(sql, params = []) {
-        if (sql.includes('SELECT posts') && sql.includes('WHERE posts.id = ?')) {
-            const [postId] = params;
-            const post = this.posts.get(postId);
-            if (!post) return null;
-            const user = this.users.get(post.userId);
-            return {
-                id: post.id,
-                content: post.content,
-                imageData: post.imageData,
-                videoData: post.videoData,
-                createdAt: post.createdAt,
-                userId: user?.id,
-                firstName: user?.firstName,
-                lastName: user?.lastName,
-                username: user?.username,
-                profilePicture: user?.profilePicture,
-                likeCount: post.likeCount,
-                repostCount: post.repostCount,
-                replyCount: post.replyCount,
-                commentCount: post.commentCount
-            };
-        } else if (sql.includes('SELECT * FROM posts WHERE id = ?')) {
-            const [postId] = params;
-            return this.posts.get(postId);
-        } else if (sql.includes('SELECT COUNT')) {
-            return { 'COUNT(*)': Array.from(this.posts.values()).length };
-        }
-        return null;
-    }
-
-    async all(sql, params = []) {
-        if (sql.includes('SELECT posts') && sql.includes('FROM posts')) {
-            const posts = Array.from(this.posts.values()).map(post => {
-                const user = this.users.get(post.userId);
-                return {
-                    id: post.id,
-                    content: post.content,
-                    imageData: post.imageData,
-                    videoData: post.videoData,
-                    createdAt: post.createdAt,
-                    userId: user?.id,
-                    firstName: user?.firstName,
-                    lastName: user?.lastName,
-                    username: user?.username,
-                    profilePicture: user?.profilePicture,
-                    likeCount: Array.from(this.post_likes.values()).filter(l => l.postId === post.id).length,
-                    repostCount: Array.from(this.post_reposts.values()).filter(r => r.postId === post.id).length,
-                    replyCount: post.replyCount || 0,
-                    commentCount: Array.from(this.post_comments.values()).filter(c => c.postId === post.id).length,
-                    repostedByUserId: null,
-                    repostedByFirstName: null,
-                    repostedByLastName: null,
-                    repostedByUsername: null,
-                    sortTime: post.createdAt
-                };
-            });
-            return posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } else if (sql.includes('SELECT') && sql.includes('FROM post_comments')) {
-            const [postId] = params;
-            const comments = Array.from(this.post_comments.values())
-                .filter(c => c.postId === postId)
-                .map(c => {
-                    const user = this.users.get(c.userId);
-                    return {
-                        id: c.id,
-                        postId: c.postId,
-                        userId: user?.id,
-                        firstName: user?.firstName,
-                        lastName: user?.lastName,
-                        username: user?.username,
-                        profilePicture: user?.profilePicture,
-                        content: c.content,
-                        createdAt: c.createdAt
-                    };
-                });
-            return comments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
-        return [];
     }
 }
 
