@@ -382,6 +382,7 @@ function closeConversationModal() {
 
 async function handleRegister(event) {
     event.preventDefault();
+    console.log('handleRegister called');
     
     const firstName = document.getElementById('firstName').value;
     const lastName = document.getElementById('lastName').value;
@@ -391,6 +392,8 @@ async function handleRegister(event) {
     const confirmPassword = document.getElementById('confirmPassword').value;
     const accountType = document.querySelector('input[name="accountType"]:checked')?.value;
     const instrument = document.getElementById('instrument').value;
+    
+    console.log('Form values:', { firstName, lastName, email, username, accountType, instrument });
     
     // Validation
     if (!firstName || !lastName || !email || !username || !password || !accountType || !instrument) {
@@ -409,7 +412,10 @@ async function handleRegister(event) {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        const apiUrl = `${API_BASE_URL}/auth/register`;
+        console.log('Sending request to:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -425,25 +431,31 @@ async function handleRegister(event) {
             })
         });
         
+        console.log('Response status:', response.status);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (response.ok) {
             showAlert('Registration successful! Redirecting to login...', 'success');
             setTimeout(() => {
                 window.location.href = 'login.html';
-            }, 500);
+            }, 1500);
         } else {
-            showAlert(data.error || 'Registration failed', 'danger');
+            const errorMsg = data.error || 'Registration failed';
+            console.error('Registration error:', errorMsg);
+            showAlert(errorMsg, 'danger');
         }
     } catch (error) {
         console.error('Registration error:', error);
-        showAlert('An error occurred. Please try again.', 'danger');
+        showAlert('Error: ' + error.message, 'danger');
     }
 }
 
 // Login Handler
 async function handleLogin(event) {
     event.preventDefault();
+    console.log('handleLogin called');
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -454,7 +466,10 @@ async function handleLogin(event) {
     }
     
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        const apiUrl = `${API_BASE_URL}/auth/login`;
+        console.log('Sending login request to:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -462,7 +477,10 @@ async function handleLogin(event) {
             body: JSON.stringify({ email, password })
         });
         
+        console.log('Response status:', response.status);
+        
         const data = await response.json();
+        console.log('Response data:', data);
         
         if (response.ok) {
             localStorage.setItem('userId', data.userId);
@@ -475,13 +493,15 @@ async function handleLogin(event) {
             showAlert('Login successful! Redirecting...', 'success');
             setTimeout(() => {
                 window.location.href = 'home.html';
-            }, 500);
+            }, 1000);
         } else {
-            showAlert(data.error || 'Login failed', 'danger');
+            const errorMsg = data.error || 'Login failed';
+            console.error('Login error:', errorMsg);
+            showAlert(errorMsg, 'danger');
         }
     } catch (error) {
         console.error('Login error:', error);
-        showAlert('An error occurred. Please try again.', 'danger');
+        showAlert('Error: ' + error.message, 'danger');
     }
 }
 
