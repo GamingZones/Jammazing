@@ -2,6 +2,16 @@ const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
 
+// Timeout wrapper for Firebase operations
+function withTimeout(promise, timeoutMs = 10000) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`Operation timeout after ${timeoutMs}ms`)), timeoutMs)
+        )
+    ]);
+}
+
 // Initialize Firebase Admin SDK
 let db = null;
 let auth = null;
@@ -75,6 +85,7 @@ class FirebaseDatabase {
     // USERS Operations
     async createUser(userData) {
         try {
+            console.log('📝 Starting createUser for:', userData.email);
             const userId = this.generateId();
             const timestamp = new Date().toISOString();
             
@@ -85,19 +96,26 @@ class FirebaseDatabase {
                 updatedAt: timestamp
             };
 
-            // Store in database
-            await this.db.ref(`users/${userId}`).set(user);
+            // Store in database with timeout
+            console.log('📤 Writing user to Firebase...');
+            await withTimeout(this.db.ref(`users/${userId}`).set(user), 5000);
+            console.log('✅ User data written');
             
             // Create email index for lookups
-            await this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId);
+            console.log('📤 Writing email index...');
+            await withTimeout(this.db.ref(`users_by_email/${this.encodeEmail(userData.email)}`).set(userId), 5000);
+            console.log('✅ Email index written');
             
             // Create username index
-            await this.db.ref(`users_by_username/${userData.username}`).set(userId);
+            console.log('📤 Writing username index...');
+            await withTimeout(this.db.ref(`users_by_username/${userData.username}`).set(userId), 5000);
+            console.log('✅ Username index written');
 
-            console.log(`✅ User created: ${userId}`);
+            console.log(`✅ User created successfully: ${userId}`);
             return user;
         } catch (error) {
-            console.error('Error creating user:', error);
+            console.error('❌ Error creating user:', error.message);
+            console.error('Stack:', error.stack);
             throw error;
         }
     }

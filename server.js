@@ -150,27 +150,36 @@ app.get('/favicon.ico', (req, res) => {
 // Register a new user
 app.post('/api/auth/register', async (req, res) => {
     try {
+        console.log('📨 Register request received');
+        
         if (!userModel) {
+            console.error('❌ userModel is not initialized');
             return res.status(503).json({ error: 'Database not initialized. Please try again in a moment.' });
         }
         
         const { firstName, lastName, email, username, password, accountType, instrument } = req.body;
+        console.log(`📝 Registration data: ${email}, ${username}`);
         
         // Validate input
         if (!firstName || !lastName || !email || !username || !password || !accountType) {
+            console.error('❌ Missing required fields');
             return res.status(400).json({ error: 'Missing required fields' });
         }
         
         // Check if user exists
+        console.log('🔍 Checking if user already exists...');
         const existingUser = await userModel.getByEmail(email);
         if (existingUser) {
+            console.warn('⚠️ User already exists:', email);
             return res.status(409).json({ error: 'Email already registered' });
         }
         
         // Hash password
+        console.log('🔐 Hashing password...');
         const hashedPassword = await bcrypt.hash(password, 12);
         
         // Create user
+        console.log('💾 Creating user in database...');
         const result = await userModel.create({
             firstName,
             lastName,
@@ -181,14 +190,16 @@ app.post('/api/auth/register', async (req, res) => {
             instrument: instrument || ''
         });
         
+        console.log('✅ User registered successfully:', result.id);
         res.status(201).json({
             message: 'User registered successfully',
             userId: result.id
         });
         
     } catch (error) {
-        console.error('Register error:', error);
-        res.status(500).json({ error: error.message });
+        console.error('❌ Register error:', error.message);
+        console.error('Stack trace:', error.stack);
+        res.status(500).json({ error: error.message || 'Registration failed' });
     }
 });
 
