@@ -46,27 +46,43 @@ function loadFileIdMap() {
 loadFileIdMap();
 
 /**
- * Download file from Google Drive using HTTPS
+ * Download file from Google Drive using HTTPS with redirect following
  * Returns: Promise<Buffer> - audio file buffer
  */
 function downloadFile(fileId) {
     if (!fileId) return Promise.reject(new Error('No file ID provided'));
     
     return new Promise((resolve, reject) => {
-        const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
-        
-        https.get(url, { redirect: 'follow' }, (response) => {
-            if (response.statusCode !== 200) {
-                return reject(new Error(`Google Drive returned status ${response.statusCode}`));
+        const makeRequest = (url, redirectCount = 0) => {
+            if (redirectCount > 10) {
+                return reject(new Error('Too many redirects'));
             }
             
-            const chunks = [];
-            response.on('data', chunk => chunks.push(chunk));
-            response.on('end', () => {
-                resolve(Buffer.concat(chunks));
-            });
-            response.on('error', reject);
-        }).on('error', reject);
+            https.get(url, (response) => {
+                // Handle redirects
+                if (response.statusCode === 303 || response.statusCode === 302 || response.statusCode === 301) {
+                    const redirectUrl = response.headers.location;
+                    console.log(`[gdrive] Following redirect (${response.statusCode}) to: ${redirectUrl}`);
+                    return makeRequest(redirectUrl, redirectCount + 1);
+                }
+                
+                if (response.statusCode !== 200) {
+                    return reject(new Error(`Google Drive returned status ${response.statusCode}`));
+                }
+                
+                const chunks = [];
+                response.on('data', chunk => chunks.push(chunk));
+                response.on('end', () => {
+                    const buffer = Buffer.concat(chunks);
+                    console.log(`[gdrive] Downloaded ${buffer.length} bytes`);
+                    resolve(buffer);
+                });
+                response.on('error', reject);
+            }).on('error', reject);
+        };
+        
+        const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
+        makeRequest(url);
     });
 }
 
