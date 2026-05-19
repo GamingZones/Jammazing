@@ -1807,6 +1807,19 @@ app.get('/api/posts/:id/reactions', async (req, res) => {
 // ==================== GOOGLE DRIVE INTEGRATION ====================
 const gdriveService = require('./db/gdrive');
 
+// Middleware: ensure app is initialized before processing drive requests
+app.use('/api/drive', async (req, res, next) => {
+    // Check if gdriveService is properly loaded
+    if (!gdriveService || typeof gdriveService.downloadFile !== 'function') {
+        console.error('[Drive Middleware] gdriveService not properly initialized');
+        return res.status(503).json({ 
+            error: 'Drive service not ready',
+            details: 'gdriveService.downloadFile is not a function'
+        });
+    }
+    next();
+});
+
 // Get file by path - returns audio buffer (proxied from Google Drive)
 // Usage: /api/drive/file?path=Piano/1.%20a0.wav
 app.get('/api/drive/file', async (req, res) => {
@@ -1842,7 +1855,7 @@ app.get('/api/drive/file', async (req, res) => {
         res.setHeader('Cache-Control', 'public, max-age=86400');
         res.send(buffer);
     } catch (error) {
-        console.error('[Drive API] Error:', error.message);
+        console.error('[Drive API] Error:', error.message, error.stack);
         res.status(500).json({ error: error.message });
     }
 });
