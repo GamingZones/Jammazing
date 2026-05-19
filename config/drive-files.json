@@ -1,0 +1,26 @@
+{
+  "Piano": {
+    "1. a0.wav": "REPLACE_WITH_FILE_ID",
+    "2. a#0.wav": "REPLACE_WITH_FILE_ID",
+    "3. b0.wav": "REPLACE_WITH_FILE_ID",
+    "4. c1.wav": "REPLACE_WITH_FILE_ID",
+    "5. c#1.wav": "REPLACE_WITH_FILE_ID",
+    "6. d1.wav": "REPLACE_WITH_FILE_ID",
+    "7. d#1.wav": "REPLACE_WITH_FILE_ID",
+    "8. e1.wav": "REPLACE_WITH_FILE_ID",
+    "9. f1.wav": "REPLACE_WITH_FILE_ID",
+    "10. f#1.wav": "REPLACE_WITH_FILE_ID"
+  },
+  "Guitar": {
+    "A2A3.wav": "REPLACE_WITH_FILE_ID",
+    "A3.wav": "REPLACE_WITH_FILE_ID",
+    "B2.wav": "REPLACE_WITH_FILE_ID",
+    "B3.wav": "REPLACE_WITH_FILE_ID"
+  },
+  "Drums": {
+    "Kick/RD_K_1.wav": "REPLACE_WITH_FILE_ID",
+    "Kick/RD_K_2.wav": "REPLACE_WITH_FILE_ID",
+    "Snare/RD_S_1.wav": "REPLACE_WITH_FILE_ID",
+    "Cymbals/Crash/RD_C_C_1.wav": "REPLACE_WITH_FILE_ID"
+  }
+}

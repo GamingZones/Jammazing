@@ -1807,41 +1807,8 @@ app.get('/api/posts/:id/reactions', async (req, res) => {
 // ==================== GOOGLE DRIVE INTEGRATION ====================
 const gdriveService = require('./db/gdrive');
 
-// Get all audio files from Google Drive (organized by category)
-app.get('/api/drive/audio', async (req, res) => {
-    try {
-        const audioFiles = await gdriveService.getAudioFiles();
-        res.json(audioFiles);
-    } catch (error) {
-        console.error('Error fetching Drive audio files:', error);
-        res.status(500).json({ error: 'Failed to fetch audio files' });
-    }
-});
-
-// Get flat list of all audio files
-app.get('/api/drive/audio/all', async (req, res) => {
-    try {
-        const allFiles = await gdriveService.getAllAudioFiles();
-        res.json(allFiles);
-    } catch (error) {
-        console.error('Error fetching all Drive files:', error);
-        res.status(500).json({ error: 'Failed to fetch audio files' });
-    }
-});
-
-// Get files from specific folder
-app.get('/api/drive/folder/:folderid', async (req, res) => {
-    try {
-        const files = await gdriveService.listFilesInFolder(req.params.folderid);
-        res.json(files);
-    } catch (error) {
-        console.error('Error fetching Drive folder:', error);
-        res.status(500).json({ error: 'Failed to fetch folder' });
-    }
-});
-
-// Get file by path (e.g., /api/drive/file?path=Piano/a0.wav or Piano/a0)
-// Returns direct download URL from Google Drive
+// Get file by path - returns direct Google Drive download URL
+// Usage: /api/drive/file?path=Piano/1.%20a0.wav
 app.get('/api/drive/file', async (req, res) => {
     try {
         const { path } = req.query;
@@ -1849,19 +1816,38 @@ app.get('/api/drive/file', async (req, res) => {
             return res.status(400).json({ error: 'path parameter required' });
         }
         
-        const fileInfo = await gdriveService.findFileByPath(path);
+        // Decode the path
+        const decodedPath = decodeURIComponent(path);
+        
+        // Get file info from config
+        const fileInfo = gdriveService.findFileByPath(decodedPath);
+        
         if (!fileInfo) {
-            return res.status(404).json({ error: `File not found: ${path}` });
+            return res.status(404).json({ 
+                error: `File not found: ${decodedPath}`,
+                message: 'File ID not configured. Add it to config/drive-files.json'
+            });
         }
         
-        // Return URL that can be used for blob fetching
+        // Return the direct Google Drive download URL
         res.json({
-            url: fileInfo.downloadUrl,
-            name: fileInfo.name,
+            url: fileInfo.url,
+            path: fileInfo.path,
             id: fileInfo.id
         });
     } catch (error) {
-        console.error('Error fetching file by path:', error);
+        console.error('Error in /api/drive/file:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// List all configured audio files
+app.get('/api/drive/files', async (req, res) => {
+    try {
+        const files = gdriveService.getAllConfiguredFiles();
+        res.json(files);
+    } catch (error) {
+        console.error('Error in /api/drive/files:', error);
         res.status(500).json({ error: error.message });
     }
 });
