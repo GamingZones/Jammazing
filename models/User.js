@@ -1,102 +1,94 @@
 // User Model
 class User {
-    constructor(db) {
-        this.db = db;
+    constructor(firebaseDb) {
+        this.db = firebaseDb;
     }
 
     // Create a new user
     async create(userData) {
         const { firstName, lastName, email, username, password, accountType, instrument } = userData;
         
-        const sql = `
-            INSERT INTO users (firstName, lastName, email, username, password, accountType, instrument)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        const result = await this.db.run(sql, [
+        return await this.db.createUser({
             firstName,
             lastName,
             email,
             username,
             password,
             accountType,
-            instrument || ''
-        ]);
-
-        return result;
+            instrument: instrument || ''
+        });
     }
 
     // Get user by ID
     async getById(id) {
-        const sql = 'SELECT * FROM users WHERE id = ?';
-        return await this.db.get(sql, [id]);
+        return await this.db.getUserById(id);
     }
 
     // Get user by email
     async getByEmail(email) {
-        const sql = 'SELECT * FROM users WHERE email = ?';
-        return await this.db.get(sql, [email]);
+        return await this.db.getUserByEmail(email);
     }
 
     // Get user by username
     async getByUsername(username) {
-        const sql = 'SELECT * FROM users WHERE username = ?';
-        return await this.db.get(sql, [username]);
+        return await this.db.getUserByUsername(username);
     }
 
     // Get all users
     async getAll() {
-        const sql = 'SELECT * FROM users ORDER BY createdAt DESC';
-        return await this.db.all(sql);
+        return await this.db.getAllUsers();
     }
 
     // Get all instructors
     async getInstructors() {
-        const sql = 'SELECT * FROM users WHERE accountType = ? ORDER BY firstName ASC';
-        return await this.db.all(sql, ['instructor']);
+        const users = await this.db.getAllUsers();
+        return users.filter(u => u.accountType === 'instructor').sort((a, b) => a.firstName.localeCompare(b.firstName));
     }
 
     // Get all students
     async getStudents() {
-        const sql = 'SELECT * FROM users WHERE accountType = ? ORDER BY firstName ASC';
-        return await this.db.all(sql, ['student']);
+        const users = await this.db.getAllUsers();
+        return users.filter(u => u.accountType === 'student').sort((a, b) => a.firstName.localeCompare(b.firstName));
     }
 
     // Update user
     async update(id, userData) {
         const { firstName, lastName, bio, instrument, profilePicture } = userData;
         
-        const sql = `
-            UPDATE users 
-            SET firstName = COALESCE(?, firstName),
-                lastName = COALESCE(?, lastName),
-                bio = COALESCE(?, bio),
-                instrument = COALESCE(?, instrument),
-                profilePicture = COALESCE(?, profilePicture),
-                updatedAt = CURRENT_TIMESTAMP
-            WHERE id = ?
-        `;
+        const updates = {};
+        if (firstName !== undefined) updates.firstName = firstName;
+        if (lastName !== undefined) updates.lastName = lastName;
+        if (bio !== undefined) updates.bio = bio;
+        if (instrument !== undefined) updates.instrument = instrument;
+        if (profilePicture !== undefined) updates.profilePicture = profilePicture;
 
-        return await this.db.run(sql, [
-            firstName,
-            lastName,
-            bio,
-            instrument,
-            profilePicture,
-            id
-        ]);
+        return await this.db.updateUser(id, updates);
     }
 
     // Delete user
     async delete(id) {
-        const sql = 'DELETE FROM users WHERE id = ?';
-        return await this.db.run(sql, [id]);
+        try {
+            await this.db.db.ref(`users/${id}`).remove();
+            await this.db.db.ref(`users_by_email`).once('value', (snapshot) => {
+                snapshot.forEach((child) => {
+                    if (child.val() === id) child.ref.remove();
+                });
+            });
+            await this.db.db.ref(`users_by_username`).once('value', (snapshot) => {
+                snapshot.forEach((child) => {
+                    if (child.val() === id) child.ref.remove();
+                });
+            });
+            return true;
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            throw error;
+        }
     }
 
     // Change password
     async changePassword(id, newPassword) {
-        const sql = 'UPDATE users SET password = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?';
-        return await this.db.run(sql, [newPassword, id]);
+        return await this.db.updateUser(id, { password: newPassword });
     }
 
     // Get user profile with detailed info

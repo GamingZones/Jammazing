@@ -8,8 +8,8 @@ const http = require('http');
 const socketIO = require('socket.io');
 require('dotenv').config();
 
-// Import Database and Models
-const Database = require('./db/database');
+// Import Firebase Database and Models
+const { FirebaseDatabase } = require('./db/firebase');
 const User = require('./models/User');
 const Quiz = require('./models/Quiz');
 const LiveStream = require('./models/LiveStream');
@@ -26,10 +26,7 @@ const allowedOrigins = [
     'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
-    // Add your Netlify domain here
-    // 'https://your-site.netlify.app',
-    // Add your backend domain here
-    // 'https://your-backend.onrender.com'
+    'https://jammazing.vercel.app'
 ];
 
 // Allow all origins in development
@@ -82,8 +79,14 @@ async function initializeApp() {
     
     dbInitPromise = (async () => {
         try {
-            db = new Database();
-            await db.initializeDatabase();
+            // Initialize Firebase Database
+            db = new FirebaseDatabase();
+            const initialized = await db.initialize();
+            
+            if (!initialized) {
+                console.error('❌ Firebase initialization failed - running in degraded mode');
+                return;
+            }
             
             // Initialize Models
             userModel = new User(db);
@@ -93,7 +96,8 @@ async function initializeApp() {
             backingTrackModel = new BackingTrack(db);
             notificationModel = new Notification(db);
             
-            console.log('✅ Database and models initialized');
+            dbInitialized = true;
+            console.log('✅ Firebase Database and models initialized successfully');
             
             // Load active streams from database on startup
             try {
@@ -107,47 +111,19 @@ async function initializeApp() {
                         streamerPicture: user ? user.profilePicture : null
                     });
                 }
-                console.log(`✅ Loaded ${dbStreams.length} active streams from database`);
+                console.log(`✅ Loaded ${dbStreams.length} active streams from Firebase`);
             } catch (e) {
-                console.warn('Could not load active streams from database:', e.message);
+                console.warn('⚠️ Could not load active streams:', e.message);
             }
             
-            // Migrations: add new columns/tables if they don't exist
-            await db.run(`ALTER TABLE posts ADD COLUMN videoData TEXT`).catch(() => {});
-            await db.run(`CREATE TABLE IF NOT EXISTS post_comments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                postId INTEGER NOT NULL,
-                userId INTEGER NOT NULL,
-                content TEXT NOT NULL,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
-                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-            )`);
-            await db.run(`CREATE TABLE IF NOT EXISTS post_reposts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                postId INTEGER NOT NULL,
-                userId INTEGER NOT NULL,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(postId, userId),
-                FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
-                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-            )`);
-            await db.run(`ALTER TABLE messages ADD COLUMN deletedBySender INTEGER DEFAULT 0`).catch(() => {});
-            
-            // Create comment reaction tables
-            await db.run(`CREATE TABLE IF NOT EXISTS comment_likes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                commentId INTEGER NOT NULL,
-                userId INTEGER NOT NULL,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(commentId, userId),
-                FOREIGN KEY (commentId) REFERENCES post_comments(id) ON DELETE CASCADE,
-                FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-            )`);
-            await db.run(`CREATE TABLE IF NOT EXISTS comment_replies (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                commentId INTEGER NOT NULL,
-                userId INTEGER NOT NULL,
+        } catch (error) {
+            console.error('⚠️ Database initialization warning:', error.message);
+            // Don't throw - allow app to continue with limited functionality
+        }
+    })();
+    
+    return dbInitPromise;
+}
                 content TEXT NOT NULL,
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (commentId) REFERENCES post_comments(id) ON DELETE CASCADE,
