@@ -297,11 +297,19 @@ button > [data-lucide], button > i { pointer-events:none; }
 
                 renderGeneratedQuiz(generateData.quiz);
 
+                // Show success toast notification (realtime)
                 const successMsg = document.createElement('div');
                 successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 9999; font-weight: 500;';
-                successMsg.textContent = 'Quiz saved successfully! Redirecting...';
+                successMsg.textContent = '✓ Quiz created successfully!';
                 document.body.appendChild(successMsg);
-                setTimeout(() => { window.location.href = '../Pages/ai-learning.html'; }, 2000);
+                
+                // Clear form fields for next quiz
+                document.getElementById('quizTitle').value = '';
+                document.getElementById('quizTopicPrompt').value = '';
+                document.querySelectorAll('.instrument-checkbox').forEach(cb => cb.checked = false);
+                
+                // Remove success message after 3 seconds
+                setTimeout(() => successMsg.remove(), 3000);
             } catch (error) {
                 console.error('Create quiz error:', error);
                 alert(error.message || 'Failed to create quiz');
