@@ -1,7 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const QUIZZES_FILE = path.join(__dirname, '../config/quizzes.json');
+// On Vercel, use /tmp for writable storage; otherwise use config directory
+const QUIZZES_FILE = process.env.VERCEL 
+    ? path.join('/tmp', 'quizzes.json')
+    : path.join(__dirname, '../config/quizzes.json');
 
 class QuizzesService {
     constructor() {
@@ -21,9 +24,24 @@ class QuizzesService {
                         this.quizzes.set(q.id || q._id, q);
                     });
                 }
-                console.log(`✅ Loaded ${this.quizzes.size} quizzes from file`);
+                console.log(`✅ Loaded ${this.quizzes.size} quizzes from ${QUIZZES_FILE}`);
             } else {
-                console.log('⚠️  No quizzes file found, starting with empty quiz database');
+                console.log(`⚠️  No quizzes file found at ${QUIZZES_FILE}, starting with empty quiz database`);
+                // On Vercel, load from config/quizzes.json as bootstrap
+                if (process.env.VERCEL) {
+                    const configPath = path.join(__dirname, '../config/quizzes.json');
+                    if (fs.existsSync(configPath)) {
+                        const data = fs.readFileSync(configPath, 'utf8');
+                        const parsed = JSON.parse(data);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(q => {
+                                this.quizzes.set(q.id || q._id, q);
+                            });
+                        }
+                        console.log(`✅ Bootstrapped ${this.quizzes.size} quizzes from config/quizzes.json`);
+                        this.saveQuizzes();
+                    }
+                }
             }
         } catch (error) {
             console.error('Error loading quizzes:', error);
@@ -33,10 +51,15 @@ class QuizzesService {
     saveQuizzes() {
         try {
             const data = Array.from(this.quizzes.values());
+            // Ensure directory exists on Vercel
+            const dir = path.dirname(QUIZZES_FILE);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
             fs.writeFileSync(QUIZZES_FILE, JSON.stringify(data, null, 2), 'utf8');
-            console.log(`✅ Saved ${data.length} quizzes to file`);
+            console.log(`✅ Saved ${data.length} quizzes to ${QUIZZES_FILE}`);
         } catch (error) {
-            console.error('Error saving quizzes:', error);
+            console.error(`❌ Error saving quizzes to ${QUIZZES_FILE}:`, error);
         }
     }
 
@@ -58,6 +81,7 @@ class QuizzesService {
         };
         this.quizzes.set(id, quiz);
         this.saveQuizzes();
+        console.log(`✅ Created quiz ${id} and saved`);
         return id;
     }
 
@@ -74,6 +98,7 @@ class QuizzesService {
         const deleted = this.quizzes.delete(id);
         if (deleted) {
             this.saveQuizzes();
+            console.log(`✅ Deleted quiz ${id}`);
         }
         return deleted;
     }
