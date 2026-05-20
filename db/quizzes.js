@@ -79,6 +79,14 @@ class QuizzesService {
             ...quizData,
             createdAt: new Date().toISOString()
         };
+        console.log(`✅ Creating quiz with ID ${id}:`, {
+            title: quiz.title,
+            description: quiz.description,
+            creatorId: quiz.creatorId,
+            quizType: quiz.quizType,
+            difficultyLevel: quiz.difficultyLevel,
+            totalQuestions: quiz.totalQuestions
+        });
         this.quizzes.set(id, quiz);
         this.saveQuizzes();
         console.log(`✅ Created quiz ${id} and saved`);
