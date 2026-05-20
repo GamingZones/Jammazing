@@ -193,7 +193,10 @@ button > [data-lucide], button > i { pointer-events:none; }
             const container = document.getElementById('sampleQuizzesContainer');
             const currentUserId = localStorage.getItem('userId');
             
-            if (!quizzes || quizzes.length === 0) {
+            // Filter to show only quizzes created by the current user
+            const userQuizzes = quizzes.filter(quiz => String(quiz.creatorId) === String(currentUserId));
+            
+            if (!userQuizzes || userQuizzes.length === 0) {
                 container.innerHTML = '<div class="quiz-empty-state"><div style="margin-bottom: 12px;"><i data-lucide="file-text" style="width:48px;height:48px;color:#ccc;"></i></div><h3 style="margin-bottom: 8px;">No quizzes yet</h3><p>Create your first quiz to get started!</p></div>';
                 lucide.createIcons();
                 return;
@@ -201,7 +204,7 @@ button > [data-lucide], button > i { pointer-events:none; }
 
             const difficultyColors = { easy: '#28a745', beginner: '#28a745', medium: '#fd7e14', intermediate: '#fd7e14', hard: '#dc3545', advanced: '#dc3545' };
 
-            container.innerHTML = quizzes.map(quiz => {
+            container.innerHTML = userQuizzes.map(quiz => {
                 const diff = (quiz.difficultyLevel || '').toLowerCase();
                 const badgeColor = difficultyColors[diff] || '#667eea';
                 const timeLimit = quiz.timeLimit || 5;
