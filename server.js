@@ -828,8 +828,10 @@ app.post('/api/quizzes/generate-ai', (req, res) => {
         const title = typeof body.title === 'string' ? body.title.trim() : '';
         const category = typeof body.quizType === 'string' ? body.quizType.trim() : 'general';
         const difficultyLevel = typeof body.difficultyLevel === 'string' ? body.difficultyLevel.trim() : 'beginner';
-        const questionCount = body.questionCount || 10;
+        const questionCount = parseInt(body.questionCount, 10) || 10;
         const topicPrompt = typeof body.topicPrompt === 'string' ? body.topicPrompt.trim() : '';
+
+        console.log('🎯 generate-ai request:', { title, category, difficultyLevel, questionCount });
 
         if (!title || !category || !difficultyLevel) {
             return res.status(400).json({ error: 'title, category (quizType), and difficultyLevel are required' });
@@ -841,6 +843,8 @@ app.post('/api/quizzes/generate-ai', (req, res) => {
             difficultyLevel,
             questionCount
         });
+
+        console.log(`✅ Generated ${questions.length} questions for quiz: "${title}"`);
 
         return res.status(200).json({
             message: 'Quiz generated from question bank with randomization',

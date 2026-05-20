@@ -196,6 +196,8 @@ button > [data-lucide], button > i { pointer-events:none; }
             // Filter to show only quizzes created by the current user
             const userQuizzes = quizzes.filter(quiz => String(quiz.creatorId) === String(currentUserId));
             
+            console.log(`📊 Displaying ${userQuizzes.length} user quizzes:`, userQuizzes.map(q => ({ id: q.id, title: q.title, creatorId: q.creatorId })));
+            
             if (!userQuizzes || userQuizzes.length === 0) {
                 container.innerHTML = '<div class="quiz-empty-state"><div style="margin-bottom: 12px;"><i data-lucide="file-text" style="width:48px;height:48px;color:#ccc;"></i></div><h3 style="margin-bottom: 8px;">No quizzes yet</h3><p>Create your first quiz to get started!</p></div>';
                 lucide.createIcons();
@@ -209,11 +211,16 @@ button > [data-lucide], button > i { pointer-events:none; }
                 const badgeColor = difficultyColors[diff] || '#667eea';
                 const timeLimit = quiz.timeLimit || 5;
                 const totalQ = quiz.totalQuestions || 0;
-                const creator = quiz.creatorName || 'System';
+                const creator = quiz.creatorName || 'Unknown';
+                const displayTitle = quiz.title || `Quiz (${quiz.id})`;
+                const displayDesc = quiz.description || '';
+                
+                console.log(`  📌 Quiz card: title="${displayTitle}", desc="${displayDesc}"`);
+                
                 return `
                 <div class="quiz-card">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-                        <h3 class="quiz-card-title">${quiz.title}</h3>
+                        <h3 class="quiz-card-title">${displayTitle}</h3>
                         <span style="background: ${badgeColor}22; color: ${badgeColor}; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap;">${capitalizeFirst(quiz.difficultyLevel)}</span>
                     </div>
                     <div class="quiz-card-meta">
@@ -221,7 +228,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                         <span title="Questions"><i data-lucide="help-circle" style="width:12px;height:12px;"></i> ${totalQ} Questions</span>
                         <span title="Type"><i data-lucide="music" style="width:12px;height:12px;"></i> ${capitalizeFirst(quiz.quizType) || 'General'}</span>
                     </div>
-                    ${quiz.description ? `<p class="quiz-card-description">${quiz.description}</p>` : ''}
+                    ${displayDesc ? `<p class="quiz-card-description">${displayDesc}</p>` : ''}
                     <div class="quiz-card-footer">
                         <span class="quiz-card-instructor"><i data-lucide="user" style="width:12px;height:12px;"></i> ${creator}</span>
                         <div style="display:flex;gap:8px;">

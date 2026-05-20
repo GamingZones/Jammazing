@@ -221,6 +221,17 @@ button > [data-lucide], button > i { pointer-events:none; }
             const selectedInstruments = getSelectedInstruments();
             const creatorId = localStorage.getItem('userId');
 
+            console.log('📝 Form data captured:', {
+                title,
+                quizType,
+                difficultyLevel,
+                questionCount,
+                topicPrompt,
+                selectedInstruments,
+                creatorId,
+                timeLimit
+            });
+
             if (!title || !quizType || !difficultyLevel) {
                 alert('Please fill in all required fields.');
                 return;
@@ -241,6 +252,8 @@ button > [data-lucide], button > i { pointer-events:none; }
                 const generateData = await generateResponse.json();
                 if (!generateResponse.ok) throw new Error(generateData.error || 'Failed to generate quiz');
 
+                console.log('✅ Generated quiz:', generateData.quiz);
+
                 const saveResponse = await fetch(`${API_BASE_URL}/quizzes/save-with-questions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
@@ -258,6 +271,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                 });
 
                 const saveData = await saveResponse.json();
+                console.log('💾 Save response:', saveData);
                 if (!saveResponse.ok) throw new Error(saveData.error || 'Failed to save quiz');
 
                 renderGeneratedQuiz(generateData.quiz);
@@ -294,6 +308,20 @@ button > [data-lucide], button > i { pointer-events:none; }
                 window.location.href = '../Pages/login.html';
                 return;
             }
+            
+            // Initialize form fields
+            const form = document.querySelector('form');
+            if (form) {
+                form.reset();
+            }
+            document.getElementById('quizTitle').value = '';
+            document.getElementById('quizType').value = '';
+            document.getElementById('quizDifficulty').value = '';
+            document.getElementById('quizQuestions').value = '5';
+            document.getElementById('quizTimer').value = '5';
+            document.getElementById('quizTopicPrompt').value = '';
+            document.querySelectorAll('input[name="quizInstrument"]').forEach(el => el.checked = false);
+            
             const userFirstName = localStorage.getItem('userFirstName') || 'User';
             const userLastName = localStorage.getItem('userLastName') || 'Profile';
             const profileName = document.getElementById('profileName');
