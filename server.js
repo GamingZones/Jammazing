@@ -17,6 +17,7 @@ const Message = require('./models/Message');
 const BackingTrack = require('./models/BackingTrack');
 const Notification = require('./models/Notification');
 const quizzesService = require('./db/quizzes');
+const questionBank = require('./db/questionBank');
 
 const app = express();
 const server = http.createServer(app);
@@ -586,12 +587,22 @@ app.delete('/api/quizzes/:quizId', async (req, res) => {
 // Get a specific quiz with questions (must come after more specific routes)
 app.get('/api/quizzes/:quizId', async (req, res) => {
     try {
-        const quiz = quizzesService.getQuiz(req.params.quizId);
+        let quiz = quizzesService.getQuiz(req.params.quizId);
         if (!quiz) {
             return res.status(404).json({ error: 'Quiz not found' });
         }
 
-        // Return quiz with its questions (already stored in the quiz object)
+        // If quiz has no questions, generate them from question bank
+        if (!quiz.questions || quiz.questions.length === 0) {
+            const generatedQuestions = generateRandomQuizQuestions({
+                category: quiz.quizType || 'general',
+                difficultyLevel: quiz.difficultyLevel || 'beginner',
+                questionCount: quiz.totalQuestions || 10
+            });
+            quiz.questions = generatedQuestions;
+        }
+
+        // Return quiz with its questions
         res.json({
             ...quiz,
             questions: quiz.questions || []
@@ -768,45 +779,75 @@ app.post('/api/quizzes', async (req, res) => {
     }
 });
 
+// Generate random questions from question bank with replacement
+function generateRandomQuizQuestions({ category, difficultyLevel, questionCount }) {
+    const safeCount = Math.max(1, Math.min(parseInt(questionCount, 10) || 5, 50));
+    const safeDifficulty = ['beginner', 'intermediate', 'advanced'].includes(difficultyLevel) 
+        ? difficultyLevel 
+        : 'beginner';
+    const safeCategory = ['general', 'piano', 'guitar', 'drums', 'bass'].includes(category)
+        ? category
+        : 'general';
+
+    const questionPool = questionBank[safeCategory][safeDifficulty];
+    if (!questionPool || questionPool.length === 0) {
+        return [];
+    }
+
+    const questions = [];
+    for (let i = 0; i < safeCount; i++) {
+        // Pick random question from pool WITH REPLACEMENT (allows repeats)
+        const randomIndex = Math.floor(Math.random() * questionPool.length);
+        const baseQuestion = questionPool[randomIndex];
+        
+        questions.push({
+            id: `q_${i}`,
+            question: baseQuestion.question,
+            options: baseQuestion.options,
+            answer: baseQuestion.answer,
+            type: "multiple_choice",
+            orderIndex: i + 1
+        });
+    }
+
+    return questions;
+}
+
 // Generate quiz content with AI-style generator (local deterministic generator)
 app.post('/api/quizzes/generate-ai', (req, res) => {
     try {
         const body = (req && req.body && typeof req.body === 'object') ? req.body : {};
         const title = typeof body.title === 'string' ? body.title.trim() : '';
-        const quizType = typeof body.quizType === 'string' ? body.quizType.trim() : '';
-        const difficultyLevel = typeof body.difficultyLevel === 'string' ? body.difficultyLevel.trim() : '';
-        const questionCount = body.questionCount;
+        const category = typeof body.quizType === 'string' ? body.quizType.trim() : 'general';
+        const difficultyLevel = typeof body.difficultyLevel === 'string' ? body.difficultyLevel.trim() : 'beginner';
+        const questionCount = body.questionCount || 10;
         const topicPrompt = typeof body.topicPrompt === 'string' ? body.topicPrompt.trim() : '';
-        const selectedInstruments = Array.isArray(body.selectedInstruments) ? body.selectedInstruments : [];
 
-        if (!title || !quizType || !difficultyLevel) {
-            return res.status(400).json({ error: 'title, quizType, and difficultyLevel are required' });
+        if (!title || !category || !difficultyLevel) {
+            return res.status(400).json({ error: 'title, category (quizType), and difficultyLevel are required' });
         }
 
-        // Normalize difficulty level for question generation
-        const normalizedDifficulty = mapDifficultyLevel(difficultyLevel);
-
-        const questions = generateAIQuizQuestions({
-            quizType,
-            difficultyLevel: normalizedDifficulty,
-            questionCount: questionCount || 5,
-            selectedInstruments
+        // Generate random questions from question bank with replacement
+        const questions = generateRandomQuizQuestions({
+            category,
+            difficultyLevel,
+            questionCount
         });
 
         return res.status(200).json({
-            message: 'AI quiz generated successfully',
+            message: 'Quiz generated from question bank with randomization',
             quiz: {
                 title,
-                description: `AI-generated quiz about ${topicPrompt || title}`,
-                quizType,
-                difficultyLevel: normalizedDifficulty,
+                description: `${category} ${difficultyLevel} quiz - ${questions.length} randomized questions`,
+                quizType: category,
+                difficultyLevel,
                 totalQuestions: questions.length,
                 questions
             }
         });
     } catch (error) {
-        console.error('AI quiz generation error details:', error && error.stack ? error.stack : error);
-        return res.status(500).json({ error: 'AI generation failed' });
+        console.error('Quiz generation error:', error);
+        return res.status(500).json({ error: 'Generation failed' });
     }
 });
 
