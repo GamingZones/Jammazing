@@ -317,6 +317,7 @@ button > [data-lucide], button > i { pointer-events:none; }
                 }
 
                 quizData = await response.json();
+                console.log('✅ Loaded quiz from server:', quizData);
                 
                 // Initialize timer with quiz time limit
                 const timeLimit = quizData.timeLimit || 5;
@@ -325,6 +326,25 @@ button > [data-lucide], button > i { pointer-events:none; }
                 displayQuestion();
             } catch (error) {
                 console.error('Load quiz error:', error);
+                
+                // Fallback to localStorage cache
+                const userId = localStorage.getItem('userId');
+                const cachedQuizzes = JSON.parse(localStorage.getItem(`userQuizzes_${userId}`) || '[]');
+                const quizId = getUrlParam('quizId');
+                const cachedQuiz = cachedQuizzes.find(q => q.id === quizId);
+                
+                if (cachedQuiz) {
+                    console.log('📦 Using cached quiz from localStorage:', cachedQuiz);
+                    quizData = cachedQuiz;
+                    
+                    // Initialize timer
+                    const timeLimit = quizData.timeLimit || 5;
+                    startTimer(timeLimit);
+                    
+                    displayQuestion();
+                    return;
+                }
+                
                 alert('Failed to load quiz: ' + error.message);
                 window.location.href = '../Pages/ai-learning.html';
             }

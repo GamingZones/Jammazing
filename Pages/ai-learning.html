@@ -183,9 +183,28 @@ button > [data-lucide], button > i { pointer-events:none; }
                 }
 
                 const quizzes = await response.json();
+                // Cache quizzes in localStorage
+                const userId = localStorage.getItem('userId');
+                const userQuizzes = quizzes.filter(q => String(q.creatorId) === String(userId));
+                if (userQuizzes.length > 0) {
+                    localStorage.setItem(`userQuizzes_${userId}`, JSON.stringify(userQuizzes));
+                    console.log(`💾 Cached ${userQuizzes.length} quizzes to localStorage`);
+                }
                 displayQuizzes(quizzes);
             } catch (error) {
                 console.error('Load quizzes error:', error);
+                // Fallback to localStorage cache
+                const userId = localStorage.getItem('userId');
+                const cachedQuizzes = localStorage.getItem(`userQuizzes_${userId}`);
+                if (cachedQuizzes) {
+                    try {
+                        const quizzes = JSON.parse(cachedQuizzes);
+                        console.log(`📦 Using cached quizzes from localStorage:`, quizzes);
+                        displayQuizzes(quizzes);
+                    } catch (e) {
+                        console.error('Could not parse cached quizzes:', e);
+                    }
+                }
             }
         }
 

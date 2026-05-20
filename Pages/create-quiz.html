@@ -274,6 +274,27 @@ button > [data-lucide], button > i { pointer-events:none; }
                 console.log('💾 Save response:', saveData);
                 if (!saveResponse.ok) throw new Error(saveData.error || 'Failed to save quiz');
 
+                // Cache the new quiz in localStorage
+                const userId = localStorage.getItem('userId');
+                const newQuiz = {
+                    id: saveData.quizId,
+                    title: title,
+                    description: topicPrompt || `${quizType} quiz about ${title}`,
+                    creatorId: userId,
+                    quizType: quizType,
+                    difficultyLevel: difficultyLevel,
+                    timeLimit: parseInt(timeLimit),
+                    totalQuestions: generateData.quiz.totalQuestions,
+                    questions: generateData.quiz.questions,
+                    creatorName: `${localStorage.getItem('userFirstName')} ${localStorage.getItem('userLastName')}`
+                };
+                
+                // Add to localStorage cache
+                const cachedQuizzes = JSON.parse(localStorage.getItem(`userQuizzes_${userId}`) || '[]');
+                cachedQuizzes.push(newQuiz);
+                localStorage.setItem(`userQuizzes_${userId}`, JSON.stringify(cachedQuizzes));
+                console.log('💾 Cached new quiz to localStorage');
+
                 renderGeneratedQuiz(generateData.quiz);
 
                 const successMsg = document.createElement('div');
