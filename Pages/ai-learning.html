@@ -171,6 +171,22 @@ button > [data-lucide], button > i { pointer-events:none; }
         }
 
         async function loadQuizzes() {
+            const userId = localStorage.getItem('userId');
+            
+            // STEP 1: Load and display cached quizzes immediately
+            let allQuizzes = [];
+            const cachedQuizzes = localStorage.getItem(`userQuizzes_${userId}`);
+            if (cachedQuizzes) {
+                try {
+                    allQuizzes = JSON.parse(cachedQuizzes);
+                    console.log(`📦 Loaded ${allQuizzes.length} quizzes from localStorage cache`);
+                    displayQuizzes(allQuizzes);
+                } catch (e) {
+                    console.error('Could not parse cached quizzes:', e);
+                }
+            }
+            
+            // STEP 2: Try to fetch fresh data from server and merge
             try {
                 const response = await fetch(`${API_BASE_URL}/quizzes`, {
                     headers: {
@@ -178,33 +194,38 @@ button > [data-lucide], button > i { pointer-events:none; }
                     }
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to load quizzes');
-                }
-
-                const quizzes = await response.json();
-                // Cache quizzes in localStorage
-                const userId = localStorage.getItem('userId');
-                const userQuizzes = quizzes.filter(q => String(q.creatorId) === String(userId));
-                if (userQuizzes.length > 0) {
-                    localStorage.setItem(`userQuizzes_${userId}`, JSON.stringify(userQuizzes));
-                    console.log(`💾 Cached ${userQuizzes.length} quizzes to localStorage`);
-                }
-                displayQuizzes(quizzes);
-            } catch (error) {
-                console.error('Load quizzes error:', error);
-                // Fallback to localStorage cache
-                const userId = localStorage.getItem('userId');
-                const cachedQuizzes = localStorage.getItem(`userQuizzes_${userId}`);
-                if (cachedQuizzes) {
-                    try {
-                        const quizzes = JSON.parse(cachedQuizzes);
-                        console.log(`📦 Using cached quizzes from localStorage:`, quizzes);
-                        displayQuizzes(quizzes);
-                    } catch (e) {
-                        console.error('Could not parse cached quizzes:', e);
+                if (response.ok) {
+                    const serverQuizzes = await response.json();
+                    console.log(`🌐 Fetched ${serverQuizzes.length} quizzes from server`);
+                    
+                    // Merge server quizzes with cached (server data takes priority)
+                    const serverQuizzesById = {};
+                    serverQuizzes.forEach(q => serverQuizzesById[q.id] = q);
+                    
+                    const mergedQuizzes = allQuizzes.map(q => serverQuizzesById[q.id] || q);
+                    serverQuizzes.forEach(q => {
+                        if (!mergedQuizzes.find(m => m.id === q.id)) {
+                            mergedQuizzes.push(q);
+                        }
+                    });
+                    
+                    allQuizzes = mergedQuizzes;
+                    
+                    // Update cache with merged data
+                    const userQuizzes = mergedQuizzes.filter(q => String(q.creatorId) === String(userId));
+                    if (userQuizzes.length > 0) {
+                        localStorage.setItem(`userQuizzes_${userId}`, JSON.stringify(userQuizzes));
+                        console.log(`💾 Updated cache with ${userQuizzes.length} quizzes`);
                     }
+                    
+                    // Refresh display if data changed
+                    displayQuizzes(allQuizzes);
+                } else {
+                    console.warn('⚠️ Server returned:', response.status);
                 }
+            } catch (error) {
+                console.warn('⚠️ Could not fetch from server, using cache:', error.message);
+                // Cache is already displayed, no additional action needed
             }
         }
 
