@@ -1,27 +1,7 @@
 // Dynamic API Configuration based on environment
 
-// Determine API URL based on environment
-const getApiUrl = () => {
-  if (typeof window !== 'undefined') {
-    // Browser environment
-    const isDevelopment = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1';
-    
-    if (isDevelopment) {
-      return 'http://localhost:3000';
-    }
-    
-    // Production - use Netlify environment variable or infer from origin
-    const apiUrl = window.__API_URL__ || process.env.REACT_APP_API_URL;
-    if (apiUrl) return apiUrl;
-    
-    // Fallback: same origin with /api
-    return `${window.location.origin}`;
-  }
-  
-  // Node environment fallback
-  return process.env.REACT_APP_API_URL || 'http://localhost:3000';
-};
+// NOTE: getApiUrl is defined in api.js - use that instead
+// This file kept for backward compatibility if needed
 
 const getSocketUrl = () => {
   if (typeof window !== 'undefined') {
@@ -41,5 +21,5 @@ const getSocketUrl = () => {
   return process.env.REACT_APP_SOCKET_URL || 'http://localhost:3000';
 };
 
-export const API_BASE_URL = getApiUrl() + '/api';
+export const API_BASE_URL = (typeof getApiUrl !== 'undefined' ? getApiUrl() : 'http://localhost:3000') + '/api';
 export const SOCKET_URL = getSocketUrl();
