@@ -479,15 +479,18 @@ app.get('/api/instructors', async (req, res) => {
 app.get('/api/quizzes', async (req, res) => {
     try {
         const quizzes = quizzesService.getAllQuizzes();
+        console.log(`📚 Retrieved ${quizzes.length} quizzes from service`);
         
         // Add creator name to each quiz
         const quizzesWithCreators = quizzes.map(quiz => {
             const creator = db.users.get(quiz.creatorId);
-            return {
+            const quizWithCreator = {
                 ...quiz,
                 id: quiz._id || quiz.id,
                 creatorName: creator ? `${creator.firstName} ${creator.lastName}` : 'Unknown'
             };
+            console.log(`  - Quiz: ${quizWithCreator.id}, Title: "${quizWithCreator.title}", Creator: ${quizWithCreator.creatorId}`);
+            return quizWithCreator;
         });
         
         res.json(quizzesWithCreators);
@@ -514,6 +517,8 @@ function mapDifficultyLevel(level) {
 app.post('/api/quizzes/save-with-questions', async (req, res) => {
     try {
         const { title, description, creatorId, quizType, difficultyLevel, timeLimit, totalQuestions, questions, isPublished } = req.body;
+
+        console.log('📝 Saving quiz with:', { title, description, creatorId, quizType, difficultyLevel });
 
         // Map difficulty level to database format
         const mappedDifficultyLevel = mapDifficultyLevel(difficultyLevel);
@@ -588,12 +593,15 @@ app.delete('/api/quizzes/:quizId', async (req, res) => {
 app.get('/api/quizzes/:quizId', async (req, res) => {
     try {
         let quiz = quizzesService.getQuiz(req.params.quizId);
+        console.log(`🔍 Fetching quiz ${req.params.quizId}:`, quiz ? `Found - Title: "${quiz.title}"` : 'Not found');
+        
         if (!quiz) {
             return res.status(404).json({ error: 'Quiz not found' });
         }
 
         // If quiz has no questions, generate them from question bank
         if (!quiz.questions || quiz.questions.length === 0) {
+            console.log(`  Generating questions for quiz ${req.params.quizId}`);
             const generatedQuestions = generateRandomQuizQuestions({
                 category: quiz.quizType || 'general',
                 difficultyLevel: quiz.difficultyLevel || 'beginner',
